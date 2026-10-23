@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sanctions Seizure Watch</title>
 <style>
-.page[hidden]{display:none!important}
+.page[hidden],.tile[hidden]{display:none!important}
 /* Layout: Power BI style report like the CEN Seizure Risk Board. Grey frame, white navigation pane on the left, white canvas of rounded tiles on the right; stacks to one column on phones. One light look by design. */
 :root {
   color-scheme: light;
@@ -47,6 +47,10 @@ select, input[type="search"] { font: 400 .88rem var(--font); color: var(--ink); 
 .hbars { display: grid; gap: 6px; max-height: 300px; overflow-y: auto; padding-right: 4px; }
 .hbars.tall { max-height: 440px; } .hbars.fill { max-height: 560px; }
 .hb { display: grid; grid-template-columns: minmax(0, 40%) 1fr; gap: 8px; align-items: center; font-size: .82rem; }
+.hb.click { cursor: pointer; }
+.hb.click:hover .l { text-decoration: underline; }
+.hb.sel .l { font-weight: 800; }
+.hb.sel .b { outline: 2px solid #c8791a; }
 .hb .l { text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hb .t { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .hb .b { height: 16px; flex: none; background: var(--navy); }
@@ -192,8 +196,9 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     </section>
 
     <section class="page" id="p-evasion" hidden>
-      <div class="tile span6"><h3>Evasion signs named in the reports</h3><div class="sub">share of reports in the slicers</div><div class="hbars tall" id="e-ind"></div></div>
+      <div class="tile span6"><h3>Evasion signs named in the reports</h3><div class="sub">share of reports in the slicers · tap a bar to read those reports</div><div class="hbars tall" id="e-ind"></div></div>
       <div class="tile span6"><h3>Evasion score bands</h3><div class="hbars" id="e-lv"></div><h3 style="margin-top:10px">Reports by route type</h3><div class="hbars sky" id="e-route"></div></div>
+      <div class="tile span12" id="e-sel-tile" hidden><h3 id="e-sel-h"></h3><div class="sub">every report behind the bar you tapped · tap a headline to open the article · <a href="#" id="e-sel-clear">clear selection</a></div><div class="tbl tall" id="e-sel"></div></div>
       <div class="tile span12"><h3>Highest evasion scores</h3><div class="sub">score 0-100 · bars show method, network, route and scale · see How It Works</div><div class="tbl tall" id="e-table"></div></div>
     </section>
 
@@ -301,6 +306,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     const max = Math.max(...ks.map(k => m.get(k)));
     el.innerHTML = ks.map(k => '<div class="c" title="Week from ' + k + '"><span class="v">' + fmt(m.get(k)) + '</span><span class="bar" style="height:' + (78 * m.get(k) / max).toFixed(1) + '%"></span><span class="x">' + k.slice(5) + '</span></div>').join("");
   }
+  let evSel = null;
   const sorts = {};
   function table(el, id, cols, rows, def, limit) {
     const st = sorts[id] || (sorts[id] = { k: def[0], dir: def[1] });
@@ -451,9 +457,23 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       table($("r-matrix"), "rm", [{ k: "reg", label: "Regime" }, ...cats.map(c => ({ k: c, label: c, r: true, f: r => r[c] ? '<span class="hotc">' + fmt(r[c]) + '</span>' : "–" })), { k: "total", label: "Total", r: true, f: r => fmt(r.total) }], mat, ["total", -1]);
     } else if (p === "evasion") {
       const n = v.length;
-      hbars($("e-ind"), cntMany(v, e => split(e.in)).map(([k, c]) => [(IND[k] || k) + " (" + pct(c, n) + "%)", c]));
-      hbars($("e-lv"), cnt(v, e => e.lv).sort((a, b) => LEVELRANK[b[0]] - LEVELRANK[a[0]]));
-      hbars($("e-route"), cnt(v, e => split(e.t).length ? "Via a stated transit country" : (e.o && e.de) ? "Origin and destination named" : (e.o || e.de) ? "One end named" : "No route named"));
+      const routeType = e => split(e.t).length ? "Via a stated transit country" : (e.o && e.de) ? "Origin and destination named" : (e.o || e.de) ? "One end named" : "No route named";
+      const keyOf = {};
+      const pick = (kind, val) => { evSel = (evSel && evSel.kind === kind && evSel.val === val) ? null : { kind, val }; render(); };
+      hbars($("e-ind"), cntMany(v, e => split(e.in)).map(([k, c]) => { const l = (IND[k] || k) + " (" + pct(c, n) + "%)"; keyOf[l] = k; return [l, c]; }), { click: l => pick("sign", keyOf[l]) });
+      hbars($("e-lv"), cnt(v, e => e.lv).sort((a, b) => LEVELRANK[b[0]] - LEVELRANK[a[0]]), { click: l => pick("level", l) });
+      hbars($("e-route"), cnt(v, routeType), { click: l => pick("route", l) });
+      const tile = $("e-sel-tile");
+      if (evSel) {
+        const test = { sign: e => split(e.in).includes(evSel.val), level: e => e.lv === evSel.val, route: e => routeType(e) === evSel.val }[evSel.kind];
+        const rows = v.filter(test), name = evSel.kind === "sign" ? (IND[evSel.val] || evSel.val) : evSel.val;
+        $("e-sel-h").textContent = (evSel.kind === "sign" ? "Reports naming: " : evSel.kind === "level" ? "Reports rated: " : "Reports with route: ") + name + " (" + rows.length + ")";
+        table($("e-sel"), "esel", repCols, decorate(rows), ["sc", -1]);
+        tile.hidden = false;
+        document.querySelectorAll("#p-evasion .hb").forEach(r => { r.classList.remove("sel"); });
+        const want = evSel.kind === "sign" ? Object.keys(keyOf).find(l => keyOf[l] === evSel.val) : evSel.val;
+        document.querySelectorAll("#p-evasion .hb").forEach(r => { if (r.dataset.l === want) r.classList.add("sel"); });
+      } else tile.hidden = true;
       const top = decorate(v.filter(e => e.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, 60));
       table($("e-table"), "et", [{ k: "sc", label: "Score", r: true, f: r => badge(r.lv) + " " + r.sc }, { k: "d", label: "Date" }, { k: "it", label: "Seized" }, { k: "place", label: "Seized in" }, { k: "route", label: "Route", cls: "small" }, { k: "why", label: "Why", cls: "small", f: r => esc((r.rs || []).join("; ")) }, { k: "ti", label: "Report", f: link }], top, ["sc", -1], 60);
     } else if (p === "alerts") {
@@ -510,6 +530,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     $("r-note").textContent = V.note + " Showing " + fmt(Math.min(rows.length, 500)) + " of " + fmt(rows.length) + ".";
     table($("r-table"), "reg-" + rview, V.cols, rows, V.def, 500);
   }
+  $("e-sel-clear").addEventListener("click", ev => { ev.preventDefault(); evSel = null; render(); });
   /* ---------- start ---------- */
   setupRegistry();
   setupSlicers();
