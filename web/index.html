@@ -12,7 +12,7 @@
   color-scheme: light;
   --frame: #a7a1a1; --canvas: #ffffff; --tile: #ffffff; --tile-edge: #d9d4d4;
   --ink: #252423; --muted: #605e5c; --kpi: #4d4a48; --navy: #1e3a5c; --navy-label: #203f66; --sky: #a9d3f1;
-  --col: #858b8b; --dot: #3c8ad8; --dot-edge: #1d5fa6; --land: #f1ede2; --land-edge: #cfc8b4; --sea: #d9e8f4;
+  --col: #858b8b; --dot: #3c8ad8; --dot-edge: #1d5fa6; --land: #f1ede2; --land-edge: #8d856c; --sea: #d9e8f4;
   --nav-on: #1e3a5c; --th: #a6a6a6; --warn: #c0392b; --ok: #7fa68e; --amber: #e0a12a;
   --font: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
 }
@@ -75,9 +75,10 @@ select, input[type="search"] { font: 400 .88rem var(--font); color: var(--ink); 
 .cols .x { font-size: .68rem; color: var(--ink); white-space: nowrap; }
 .map { position: relative; width: 100%; aspect-ratio: 16 / 9; background: var(--sea); border-radius: 4px; overflow: hidden; touch-action: none; }
 .map svg { width: 100%; height: 100%; display: block; }
-.ctry { fill: var(--land); stroke: var(--land-edge); stroke-width: .6; vector-effect: non-scaling-stroke; }
-.ctry.hit { stroke: #3f8f6e; }
-.clab { font-family: var(--font); fill: #6b675c; text-anchor: middle; pointer-events: none; paint-order: stroke; stroke: rgba(255,255,255,.75); stroke-width: 2.2px; stroke-linejoin: round; }
+.ctry { fill: var(--land); stroke: var(--land-edge); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.ctry.hit { stroke: #2f7a5c; }
+.coast { fill: none; stroke: #4f4a3a; stroke-width: 1.6; stroke-linejoin: round; vector-effect: non-scaling-stroke; pointer-events: none; }
+.clab { font-family: var(--font); fill: #3b382f; text-anchor: middle; pointer-events: none; paint-order: stroke; stroke: rgba(255,255,255,.9); stroke-width: 3px; stroke-linejoin: round; }
 .clab.hit { fill: #1f5c44; font-weight: 700; }
 .land { fill: var(--land); stroke: var(--land-edge); stroke-width: .6; }
 .dot { fill: var(--dot); stroke: var(--dot-edge); stroke-width: 1; cursor: pointer; fill-opacity: .8; }
@@ -359,6 +360,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     if (window.CEN_WORLD && window.topojson && CEN_WORLD.countries) {
       geo = topojson.feature(CEN_WORLD.countries, CEN_WORLD.countries.objects.countries).features.filter(f => f.properties.name !== "Antarctica").map(f => { const b = path.bounds(f); return { f, name: ALIAS[f.properties.name] || f.properties.name, c: path.centroid(f), w: b[1][0] - b[0][0], hit: 0 }; });
       g.append("g").selectAll("path").data(geo).join("path").attr("class", "ctry").attr("d", d => path(d.f));
+      if (CEN_WORLD.land) g.append("path").attr("class", "coast").attr("d", path(topojson.feature(CEN_WORLD.land, CEN_WORLD.land.objects.land)));
       labG = g.append("g");
       labG.selectAll("text").data(geo.filter(d => isFinite(d.c[0]))).join("text").attr("class", "clab").attr("x", d => d.c[0]).attr("y", d => d.c[1]).text(d => d.name);
     } else if (window.CEN_WORLD && window.topojson) g.append("path").attr("class", "land").attr("d", path(topojson.feature(CEN_WORLD.land, CEN_WORLD.land.objects.land)));
@@ -377,8 +379,8 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     M.layer.selectAll("circle").attr("r", function () { return this.__r / Math.sqrt(M.k); }).attr("stroke-width", 1 / Math.sqrt(M.k));
     M.layer.selectAll("path.route").attr("stroke-width", function () { return this.__w / Math.sqrt(M.k); });
     M.layer.selectAll("text.lab").attr("font-size", 9 / Math.sqrt(M.k));
-    if (M.labG) M.labG.selectAll("text").attr("font-size", d => (d.hit ? 11 : 9) / M.k).style("stroke-width", 2.2 / M.k + "px")
-      .attr("display", d => ((d.hit && (d.top || M.k >= 2.5)) || d.w * M.k >= d.name.length * 4.6) ? null : "none").classed("hit", d => d.hit > 0);
+    if (M.labG) M.labG.selectAll("text").attr("font-size", d => (d.hit ? 14 : 12) / M.k).style("stroke-width", 3 / M.k + "px")
+      .attr("display", d => ((d.hit && (d.top || M.k >= 2.5)) || d.w * M.k >= d.name.length * 6.2) ? null : "none").classed("hit", d => d.hit > 0);
   }
   const ALIAS = { "United States of America": "United States", "Czechia": "Czech Republic", "Dem. Rep. Congo": "Democratic Republic of the Congo", "Central African Rep.": "Central African Republic", "Eq. Guinea": "Equatorial Guinea", "S. Sudan": "South Sudan", "Bosnia and Herz.": "Bosnia and Herzegovina", "Dominican Rep.": "Dominican Republic", "Macedonia": "North Macedonia", "W. Sahara": "Western Sahara", "Solomon Is.": "Solomon Islands", "Falkland Is.": "Falkland Islands", "N. Cyprus": "Northern Cyprus", "eSwatini": "Eswatini", "Fr. S. Antarctic Lands": "French Southern Lands" };
   /* colour each country by how many reports are in it (green = more) */
@@ -386,7 +388,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     if (!M.geo) return;
     const n = new Map(); rows.forEach(e => { if (e.c) n.set(e.c, (n.get(e.c) || 0) + 1); });
     const mx = Math.max(1, ...n.values()), col = d3.scaleSequentialSqrt(d3.interpolateRgb("#d3ecdd", "#4f9f7c")).domain([0, mx]);
-    M.geo.forEach(d => { d.hit = n.get(d.name) || 0; }); const cut = [...n.values()].sort((a, b) => b - a)[13] || 1; M.geo.forEach(d => { d.top = d.hit >= cut && d.w > 8; });
+    M.geo.forEach(d => { d.hit = n.get(d.name) || 0; }); const cut = [...n.values()].sort((a, b) => b - a)[8] || 1; M.geo.forEach(d => { d.top = d.hit >= cut && d.w > 8; });
     M.svg.selectAll("path.ctry").style("fill", d => d.hit ? col(d.hit) : null).classed("hit", d => d.hit > 0)
       .on("mousemove", (ev, d) => { if (d.hit) showTip(M, ev, "<b>" + esc(d.name) + "</b><br>" + fmt(d.hit) + " report" + (d.hit === 1 ? "" : "s")); }).on("mouseleave", () => M.tip.hidden = true);
     scale(M);
