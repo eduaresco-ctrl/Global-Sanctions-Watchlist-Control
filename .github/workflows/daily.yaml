@@ -2,11 +2,14 @@ name: daily-sanctions-seizure-watch
 
 on:
   schedule:
-    - cron: "0 8 * * *"            # once a day at 08:00 UTC (10:00 in Central European Summer Time)
+    # GitHub schedules in UTC only. Brussels is UTC+2 in summer and UTC+1 in winter, so the job is started at both
+    # 08:05 and 09:05 UTC and the first step lets only the one that falls at 10:xx Brussels time go on.
+    - cron: "5 8 * * *"
+    - cron: "5 9 * * *"
   workflow_dispatch:               # lets you press "Run workflow" by hand
     inputs:
       days:
-        description: "Look-back days (use 30 for the very first run to back-fill history)"
+        description: "Look-back days (2 = normal day, 30 = one month, 90 = three-month back-fill)"
         default: "2"
 
 permissions:
@@ -19,19 +22,32 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Only continue at 10:xx Brussels time (scheduled runs)
+        id: gate
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(TZ=Europe/Brussels date +%H)" != "10" ]; then
+            echo "Not 10:00 in Brussels - skipping this trigger"; echo "go=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=yes" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.gate.outputs.go == 'yes'
+        uses: actions/checkout@v4
+      - if: steps.gate.outputs.go == 'yes'
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install -r requirements.txt
-      - run: python -m spacy download en_core_web_sm
+      - if: steps.gate.outputs.go == 'yes'
+        run: pip install -r requirements.txt
+      - if: steps.gate.outputs.go == 'yes'
+        run: python -m spacy download en_core_web_sm
       - name: Collect, analyse and build the dashboard
+        if: steps.gate.outputs.go == 'yes'
         run: python -u run_daily.py --days "${{ github.event.inputs.days || '2' }}" 2>&1 | tee run.log
       - name: Keep the run log (so a failure can be read)
-        if: always()
+        if: always() && steps.gate.outputs.go == 'yes'
         run: |
           mkdir -p data
           tail -n 200 run.log > data/last_run.log || true
@@ -41,6 +57,7 @@ jobs:
           git diff --cached --quiet || git commit -m "Run log $(date -u +%FT%TZ)"
           git push || (git pull --rebase --autostash -X theirs origin main && git push) || true
       - name: Save results
+        if: steps.gate.outputs.go == 'yes'
         run: |
           git config user.name  "sanctions-watch-bot"
           git config user.email "actions@users.noreply.github.com"

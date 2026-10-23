@@ -61,7 +61,20 @@ _ED_COUNTRY = {"US": "United States", "GB": "United Kingdom", "AU": "Australia",
 
 
 def google_news(query, ed, days):
-    q = quote(f"{query} when:{days}d")
+    """Google News returns at most ~100 items per search, so a long look-back (e.g. 90 days for a back-fill)
+    is cut into 30-day windows and searched window by window."""
+    if days <= 35:
+        return _google_news(query, ed, f"when:{days}d")
+    out, today = [], dt.date.today()
+    for start in range(0, days, 30):
+        after = today - dt.timedelta(days=min(start + 30, days))
+        before = today - dt.timedelta(days=start) + dt.timedelta(days=1)
+        out += _google_news(query, ed, f"after:{after.isoformat()} before:{before.isoformat()}")
+    return out
+
+
+def _google_news(query, ed, window):
+    q = quote(f"{query} {window}")
     url = (f"https://news.google.com/rss/search?q={q}&hl={ed['hl']}&gl={ed['gl']}&ceid={quote(ed['ceid'], safe=':')}")
     r = _get(url)
     if r is None:
