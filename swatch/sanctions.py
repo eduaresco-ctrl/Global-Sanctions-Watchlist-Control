@@ -23,7 +23,7 @@ SANCTIONS = rx(
 
 # ---------------------------------------------------------------- 2. seizure cue
 SEIZURE = rx(
-    r"seiz", r"confiscat", r"impound", r"intercept", r"detain(?:ed|s|ing)?\b", r"\bheld\b(?=.{0,40}(?:port|tanker|vessel|ship|cargo))", r"\b(?:impound|seiz)\w*",
+    r"seiz", r"\bfroze\b", r"\bfrozen\b", r"\bfreez(?:e|es|ing)\b(?=.{0,60}(?:assets?|villa|property|properties|real\s+estate|shares|yacht|account|funds|aircraft|jet))", r"confiscat", r"impound", r"intercept", r"detain(?:ed|s|ing)?\b", r"\bheld\b(?=.{0,40}(?:port|tanker|vessel|ship|cargo))", r"\b(?:impound|seiz)\w*",
     r"(?:vessel|ship|tanker|cargo|shipment|consignment|goods|aircraft|plane|yacht)\s+(?:was|were|has\s+been|have\s+been)?\s*detained",
     r"board(?:s|ed|ing)?\b(?=.{0,60}(?:vessel|ship|tanker|cargo|dhow|boat|freighter))", r"forfeit", r"\bheld\s+(?:at|in)\s+port", r"blocked\s+(?:shipment|cargo|export|delivery)", r"stopped\s+(?:shipment|cargo|export)",
     r"\bbust(?:ed)?\b", r"\bhaul\b", r"\bcaptur(?:e|ed|es)\b(?=.{0,40}(?:tanker|vessel|ship|cargo))",
@@ -38,7 +38,11 @@ CAT_OIL = "Oil & fuel"
 CAT_DUAL = "Dual-use & military technology"
 CAT_ARMS = "Weapons & ammunition"
 CAT_WMD = "Chemicals & WMD-related items"
-CAT_LUX = "Luxury goods, yachts & aircraft"
+CAT_LUX = "Luxury goods & yachts"
+CAT_AIR = "Aircraft & aviation"
+CAT_PROP = "Real estate & company assets"
+CAT_CULT = "Cultural property & antiquities"
+CAT_FOOD = "Food, fertiliser & fisheries"
 CAT_ASSET = "Cash, crypto & financial assets"
 CAT_METAL = "Metals, minerals & commodities"
 CAT_VEH = "Vehicles & machinery"
@@ -49,24 +53,36 @@ _VNOUN_OTHER = ("танкер\\w*|судн\\w*|судно|судна|кораб�
 VESSEL_RX = rx(r"(?<![a-z])(?:" + _VNOUN_LAT + r")(?![a-z])", _VNOUN_OTHER)
 
 ITEMS = [
+    (CAT_ASSET, "Crypto wallets, exchanges & servers", rx(r"crypto(?:currency)?\s+(?:wallets?|exchanges?|platforms?|mixers?|addresses)", r"(?:wallets?|addresses)\b(?=.{0,30}(?:crypto|bitcoin|usdt|tether|ethereum|seiz|frozen))", r"mining\s+(?:rigs?|farms?|machines?)", r"(?:crypto|exchange)\s+(?:servers?|domains?)", r"garantex", r"grinex")),
     # (category, label, pattern)   -- first match in this order names the item
     (CAT_WMD, "Nuclear / missile-related items", rx(r"centrifuge", r"maraging", r"uranium", r"nuclear[- ](?:related|material|component|equipment)", r"ballistic\s+missile\s+(?:propellant|fuel)", r"propellant", r"proliferation[- ]sensitive", r"\bwmd\b", r"weapons\s+of\s+mass\s+destruction")),
     (CAT_WMD, "Chemicals / precursors", rx(r"chemical\s+(?:weapon|precursor|agent)s?", r"nerve\s+agent", r"sodium\s+perchlorate", r"ammonium\s+perchlorate", r"precursors?\s+for\s+(?:weapons|missiles)")),
+    (CAT_DUAL, "Missile / drone / nuclear components", rx(r"(?:components?|parts|engines?|guidance|electronics|navigation|equipment)\s+(?:for|of|used\s+in|destined\s+for)\s+(?:ballistic\s+)?(?:missiles?|drones?|uavs?|centrifuges?|nuclear)", r"missile\s+(?:parts?|components?|guidance|engines?)", r"procurement\s+network", r"proliferation\s+network")),
     (CAT_ARMS, "Missiles / rockets", rx(r"missiles?", r"missile\s+(?:part|component|propellant|technolog)\w*", r"rockets?\b", r"misiles?", r"ракет", "صواريخ", "صاروخ", "导弹", "飞弹")),
     (CAT_ARMS, "Drones / UAVs (military)", rx(r"military\s+drones?", r"attack\s+drones?", r"kamikaze\s+drones?", r"shahed", r"suicide\s+drones?", r"\buavs?\b(?=.{0,40}(?:iran|russia|houthi|military))")),
     (CAT_ARMS, "Firearms / small arms", rx(r"rifles?", r"assault\s+rifles?", r"kalashnikov", r"\bak-?47s?\b", r"machine\s+guns?", r"pistols?", r"firearms?", r"small\s+arms", r"\barms\b", r"weapons?", r"armas\b", r"armes\b", "оружи", "أسلحة", "سلاح", "武器", "军火", "軍火")),
     (CAT_ARMS, "Ammunition / explosives", rx(r"ammunition", r"\bammo\b", r"rounds\s+of", r"cartridges", r"explosives?", r"detonators?", r"munitions?", r"grenades?", r"rpgs?\b", r"anti-?tank", r"боеприпас", "ذخيرة", "ذخائر", "弹药", "彈藥")),
     (CAT_ARMS, "Military equipment", rx(r"military\s+(?:equipment|hardware|goods|material|cargo|supplies)", r"body\s+armou?r", r"armou?red\s+vehicles?", r"tanks?\b(?=.{0,30}(?:military|army|battle))", r"artillery", r"радиолокац")),
     (CAT_DUAL, "Microchips / semiconductors", rx(r"micro-?chips?", r"semi-?conductors?", r"integrated\s+circuits?", r"\bchips?\b(?=.{0,40}(?:russia|iran|export|sanction|dual|military|electronic))", r"\bfpga\b", r"микросхем", "芯片", "半导体", "半導體")),
+    (CAT_AIR, "Aircraft parts & engines", rx(r"aircraft\s+(?:parts?|components?|engines?|spares?)", r"aviation\s+(?:parts?|spares?|components?)", r"(?:boeing|airbus)\s+(?:parts?|spares?)", r"airplane\s+parts?", r"helicopter\s+(?:parts?|spares?)", r"jet\s+engines?", r"turbo-?(?:jet|fan)", r"avionics", r"spare\s+parts\s+for\s+(?:aircraft|airplanes?|planes?)")),
     (CAT_DUAL, "Drone / aircraft components", rx(r"drone\s+(?:parts?|components?|engines?)", r"uav\s+(?:parts?|components?)", r"aircraft\s+(?:parts?|components?|engines?)", r"aviation\s+parts?", r"helicopter\s+parts?", r"jet\s+engines?", r"turbo-?jet", r"gas\s+turbines?")),
+    (CAT_DUAL, "Surveillance & telecom equipment", rx(r"surveillance\s+(?:equipment|technolog|system|software)", r"spyware", r"interception\s+(?:equipment|technolog|system)", r"\bimsi\b", r"facial\s+recognition", r"telecom\w*\s+equipment", r"telecommunications?\s+equipment", r"jamming\s+(?:equipment|devices?)")),
     (CAT_DUAL, "Electronics / navigation / radar", rx(r"electronic\s+(?:components?|equipment|parts)", r"radar", r"night[- ]vision", r"thermal\s+(?:imag|camera|scope|sight)", r"\bgps\b", r"navigation\s+(?:equipment|system)", r"telecom\w*\s+equipment", r"optical\s+(?:equipment|sight)", r"lasers?\b", r"encryption", r"servers?\b(?=.{0,30}(?:export|sanction|russia))", r"electronique")),
     (CAT_DUAL, "Machine tools / CNC", rx(r"machine\s+tools?", r"\bcnc\b", r"lathes?", r"milling\s+machines?", r"industrial\s+machinery", r"станк", "机床")),
     (CAT_DUAL, "Dual-use goods (unspecified)", rx(r"dual[- ]use", r"doble\s+uso", r"double\s+usage", r"двойного\s+назначения", "两用", r"cift\s+kullanimli", r"controlled\s+(?:goods|items|technolog)", r"export[- ]controlled", r"restricted\s+(?:goods|items|technolog)")),
     (CAT_OIL, "Crude oil", rx(r"crude(?:\s+oil)?", r"\boil\b", r"petroleo", r"petrole\b", r"nefte", r"нефт", "نفط", "النفط", "石油", "原油", "petrol\b", r"barrels?", r"bbls?")),
     (CAT_OIL, "Refined fuel / diesel / LNG", rx(r"diesel", r"gas-?oil", r"gasoil", r"gasoline", r"\bpetrol\b", r"jet\s+fuel", r"kerosene", r"fuel\s+oil", r"\bfuel\b", r"refined\s+(?:product|petroleum|oil)", r"\blng\b", r"\blpg\b", r"naphtha", r"bunker\s+fuel", r"combustible", r"carburant", "топлив", "дизел", "وقود", "燃油", "柴油", "akaryakit", "mazot")),
+    (CAT_FOOD, "Seafood / fish", rx(r"seafood", r"\bfish\b", r"\bsquid\b", r"\bcrabs?\b", r"fishing\s+(?:catch|products?)", r"fish\s+(?:cargo|shipment)")),
+    (CAT_FOOD, "Fertiliser", rx(r"fertili[sz]ers?", r"potash", r"ammonium\s+nitrate")),
+    (CAT_FOOD, "Grain / food / agricultural products", rx(r"\bgrain\b", r"\bwheat\b", r"\bcorn\b", r"\bbarley\b", r"\bsugar\b", r"\bfood\b", r"agricultural\s+products?", r"sunflower\s+oil", r"\brice\b", r"stolen\s+ukrainian\s+grain")),
     (CAT_LUX, "Yacht / boat", rx(r"\byachts?\b", r"superyachts?", r"мегаяхт", "яхт", "يخت", "游艇", "遊艇")),
-    (CAT_LUX, "Private jet / aircraft", rx(r"private\s+(?:jet|plane|aircraft)", r"business\s+jet", r"\bjets?\b(?=.{0,30}(?:oligarch|sanction|seiz|private))", r"airliners?", r"boeing\s+\d{3}", r"airbus\s+a\d{3}", r"aircraft\b(?=.{0,30}(?:seiz|sanction|oligarch))", r"helicopters?\b(?=.{0,30}(?:seiz|sanction|oligarch))")),
-    (CAT_LUX, "Luxury goods (cars, watches, art, jewellery, alcohol)", rx(r"luxury\s+(?:goods?|items?|cars?|vehicles?|products?|watches)", r"supercars?", r"\bferrari", r"lamborghini", r"rolls[- ]royce", r"bentley", r"watches", r"jewel(?:l)?ery", r"artworks?", r"paintings?", r"\bart\s+collection", r"champagne", r"whisk(?:e)?y", r"cognac", r"designer\s+(?:goods|clothes|handbags)", r"handbags?", r"villas?\b(?=.{0,30}(?:seiz|sanction|oligarch))", r"mansion", r"real\s+estate", r"properties\b(?=.{0,30}(?:seiz|sanction|oligarch))")),
+    (CAT_AIR, "Aircraft (jets, airliners, helicopters)", rx(r"private\s+(?:jet|plane|aircraft)", r"business\s+jet", r"\bjets?\b(?=.{0,30}(?:oligarch|sanction|seiz|private))", r"airliners?", r"boeing\s+\d{3}", r"airbus\s+a\d{3}", r"aircraft\b(?=.{0,30}(?:seiz|sanction|oligarch))", r"helicopters?\b(?=.{0,30}(?:seiz|sanction|oligarch))")),
+    (CAT_CULT, "Antiquities & cultural property", rx(r"antiquit(?:y|ies)", r"artefacts?", r"artifacts?", r"archaeological", r"cultural\s+(?:property|heritage|objects?|goods)", r"looted", r"manuscripts?", r"mosaics?", r"antigüedades|antiquites|antikvit", "древност", "文物", "آثار")),
+    (CAT_PROP, "Real estate", rx(r"real\s+estate", r"\bvillas?\b(?=.{0,40}(?:seiz|sanction|oligarch|frozen|freez))", r"mansions?", r"\bapartments?\b(?=.{0,40}(?:seiz|sanction|oligarch|frozen|freez))", r"properties\b(?=.{0,40}(?:seiz|sanction|oligarch|frozen|freez))", r"\bproperty\b(?=.{0,40}(?:seiz|sanction|oligarch|frozen|freez))", r"residences?\b(?=.{0,40}(?:seiz|sanction|oligarch|frozen|freez))", "недвижимост")),
+    (CAT_PROP, "Company shares & holdings", rx(r"(?:company|corporate)\s+(?:shares|stakes?|assets|holdings)", r"\bshares\b(?=.{0,40}(?:seiz|sanction|oligarch|frozen|freez))", r"\bstakes?\b(?=.{0,40}(?:seiz|sanction|oligarch|frozen|freez))", r"shareholdings?", r"\bsubsidiar(?:y|ies)\b(?=.{0,40}(?:seiz|sanction|frozen|freez|nationali[sz]))", r"nationali[sz]ed\s+(?:company|assets)", r"доли\b")),
+    (CAT_LUX, "Art & collectibles", rx(r"artworks?", r"paintings?", r"\bart\s+collection", r"sculptures?", r"collectibles?", r"\bart\b(?=.{0,30}(?:seiz|sanction|oligarch))")),
+    (CAT_OTHER, "Tobacco & alcohol", rx(r"cigarettes?", r"tobacco", r"\bvodka\b", r"\balcohol\b", r"\bwine\b", r"\bspirits\b(?=.{0,30}(?:seiz|sanction|smuggl))", r"\bbeer\b")),
+    (CAT_LUX, "Luxury goods (cars, watches, art, jewellery, alcohol)", rx(r"luxury\s+(?:goods?|items?|cars?|vehicles?|products?|watches)", r"supercars?", r"\bferrari", r"lamborghini", r"rolls[- ]royce", r"bentley", r"watches", r"jewel(?:l)?ery", r"artworks?", r"paintings?", r"\bart\s+collection", r"champagne", r"whisk(?:e)?y", r"cognac", r"designer\s+(?:goods|clothes|handbags)", r"handbags?")),
     (CAT_ASSET, "Cash / bank accounts", rx(r"\bcash\b", r"bank\s+accounts?", r"bank\s+funds", r"\bfunds\b(?=.{0,30}(?:seiz|sanction|frozen))", r"foreign\s+currency", r"banknotes", r"money\s+transfers?", r"\bassets?\b(?=.{0,30}(?:seiz|sanction|oligarch|frozen))", r"efectivo", r"especes", "наличн", "активы", "资产")),
     (CAT_ASSET, "Cryptocurrency", rx(r"crypto(?:currency|currencies)?", r"bitcoin", r"\busdt\b", r"tether", r"\bethereum\b", r"крипто", "加密货币", "加密貨幣")),
     (CAT_METAL, "Gold / diamonds / precious metals", rx(r"\bgold\b", r"diamonds?", r"precious\s+(?:metals?|stones?)", r"\boro\b", r"золот", "ذهب", "黄金", "黃金", "altin")),
@@ -74,7 +90,6 @@ ITEMS = [
     (CAT_METAL, "Charcoal", rx(r"charcoal", r"carbon\s+vegetal", r"charbon\s+de\s+bois")),
     (CAT_METAL, "Steel / iron / copper / aluminium", rx(r"\bsteel\b", r"\biron\b", r"iron\s+ore", r"copper", r"alumin(?:i)?um", r"\bnickel\b", r"\btitanium\b", r"scrap\s+metal", r"pig\s+iron", r"\bmetals?\b", r"\bores?\b", r"минерал", "钢铁", "钢材")),
     (CAT_METAL, "Timber / wood", rx(r"\btimber\b", r"\blumber\b", r"\bwood\b", r"\blogs\b", r"plywood")),
-    (CAT_METAL, "Fertiliser / grain / food", rx(r"fertili[sz]ers?", r"\bgrain\b", r"\bwheat\b", r"sugar\b", r"seafood", r"\bfish\b", r"\bsquid\b", r"crab", r"\bfood\b", r"agricultural\s+products?", r"sunflower\s+oil")),
     (CAT_VEH, "Vehicles", rx(r"\bcars?\b", r"\btrucks?\b", r"\blorr(?:y|ies)\b", r"vehicles?", r"automobiles?", r"\bsuvs?\b", r"motorcycles?", r"automoviles?", r"voitures?", r"carros?", r"автомобил", r"машин", "سيارات", "汽车", "汽車", "araclar", "arac")),
     (CAT_VEH, "Machinery / heavy equipment", rx(r"machinery", r"heavy\s+equipment", r"excavators?", r"bulldozers?", r"generators?", r"engines?\b", r"turbines?", r"\bequipment\b", r"spare\s+parts", r"auto\s+parts", r"оборудован", "معدات", "设备", "設備")),
     (CAT_OTHER, "Textiles / consumer goods", rx(r"textiles?", r"garments?", r"clothing", r"consumer\s+goods", r"electronics", r"appliances", r"cosmetics", r"cigarettes", r"tobacco", r"alcohol", r"vodka", r"pharmaceuticals?", r"medicines?")),

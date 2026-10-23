@@ -59,6 +59,16 @@ sources:
         - 'charcoal Somalia embargo seized'
         - 'ship-to-ship transfer sanctioned oil tanker detained'
         - 'false flag OR "fake flag" tanker detained sanctions'
+        - 'aircraft parts OR airliner OR "private jet" seized OR impounded sanctions'
+        - 'real estate OR villa OR property OR shares frozen OR seized sanctioned oligarch'
+        - 'crypto OR wallets OR exchange seized OR frozen sanctions evasion Russia OR Iran OR "North Korea"'
+        - 'antiquities OR artifacts OR "cultural property" seized sanctions Syria OR Iraq OR Libya'
+        - 'gold OR diamonds OR coal seized sanctions'
+        - 'fertiliser OR grain OR seafood shipment seized OR detained sanctions'
+        - 'drone OR missile components procurement network seized Iran OR Russia sanctions'
+        - 'luxury goods OR cars OR watches OR vodka OR cigarettes seized sanctions North Korea OR Russia OR Iran'
+        - 'surveillance OR spyware OR "telecom equipment" seized OR blocked sanctions export'
+        - 'machine tools OR CNC OR semiconductors seized OR intercepted export controls Russia OR China'
       es:
         - 'petrolero sancionado OR "flota fantasma" retenido OR incautado'
         - 'sanciones incautan OR decomisan embargo cargamento'
@@ -97,6 +107,7 @@ sources:
       en:
         - '(sanctioned OR "shadow fleet" OR embargo OR "export controls" OR "dual-use") (seized OR detained OR impounded OR forfeiture)'
         - '(OFAC OR "sanctions evasion" OR "sanctioned tanker") (seized OR boarded OR intercepted)'
+        - '(sanctions OR sanctioned OR embargo) (aircraft OR "real estate" OR crypto OR antiquities OR gold OR "drone components") (seized OR frozen OR forfeiture)'
       es:
         - '(sanciones OR "flota fantasma" OR embargo) (incautado OR retenido OR decomisado)'
       fr:

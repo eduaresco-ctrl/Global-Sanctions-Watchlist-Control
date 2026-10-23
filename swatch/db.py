@@ -202,3 +202,28 @@ def get_meta(conn, key, default=None):
 def set_meta(conn, key, value):
     conn.execute("INSERT OR REPLACE INTO meta(k, v) VALUES(?, ?)", (key, str(value)))
     conn.commit()
+
+
+NEW_CATEGORIES = ("Aircraft & aviation", "Real estate & company assets", "Cultural property & antiquities", "Food, fertiliser & fisheries")
+NEW_ITEMS = ("Missile / drone / nuclear components", "Surveillance & telecom equipment", "Art & collectibles", "Tobacco & alcohol",
+             "Crypto wallets, exchanges & servers")
+
+
+def recategorise(conn, categorise_fn):
+    """One-off: earlier reports were filed before the newer categories existed. Re-read each headline and move a report
+    only when the new rules name one of the new categories or items. Runs once (remembered in meta)."""
+    if get_meta(conn, "recategorised_v2"):
+        return 0
+    rows = conn.execute("SELECT id, title, title_en, category, item FROM articles WHERE relevant=1 AND category IS NOT NULL AND category != 'Vessel / tanker'").fetchall()
+    moved = 0
+    for r in rows:
+        try:
+            cat, item = categorise_fn(r["title_en"] or r["title"])
+        except Exception:
+            continue
+        if cat and item and (cat in NEW_CATEGORIES or item in NEW_ITEMS) and (cat, item) != (r["category"], r["item"]):
+            conn.execute("UPDATE articles SET category=?, item=? WHERE id=?", (cat, item, r["id"]))
+            moved += 1
+    set_meta(conn, "recategorised_v2", "1")
+    conn.commit()
+    return moved

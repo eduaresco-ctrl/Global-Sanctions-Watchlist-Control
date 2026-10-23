@@ -259,3 +259,10 @@ def extract(title, text="", source_country=None):
     rec["completeness"] = sum([bool(item), bool(regimes), bool(route["seizure_country"]), bool(route["origin"] or route["destination"]),
                                bool(vessel or imo), bool(kg or barrels or units or value), bool(agency)])
     return rec
+
+
+def categorise_headline(title):
+    """(category, item) from a headline alone; used to re-file earlier reports. Vessel seizures are left alone."""
+    t = L.norm(title or "")
+    cat, item, _ = _categorise(t, t)
+    return (cat, item) if cat != S.CAT_VESSEL else (None, None)
