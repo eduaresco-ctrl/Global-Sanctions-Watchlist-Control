@@ -47,7 +47,8 @@ def _get(url, timeout=20, **kw):
         r.raise_for_status()
         return r
     except Exception as e:
-        log(f"   ! {url[:90]}... {type(e).__name__}")
+        code = getattr(getattr(e, "response", None), "status_code", "")
+        log(f"   ! {url[:90]}... {type(e).__name__} {code}".rstrip())
         return None
 
 
