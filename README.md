@@ -32,3 +32,7 @@ Outputs in `docs/`: `index.html` (dashboard), `data.js`, `events.csv`, `sanction
 - "Seized in" can be the seizing country when the seizure was at sea (shown as "at sea, seized by X").
 - Indicators are phrases in articles, never traits of a person or nationality; scores justify a closer look and are not proof. Only extracted facts and links are stored.
 - Live collection was not tested in the build sandbox (no news access): run the backfill once and check the counts in `data/last_run.log`.
+
+## Source registry
+
+`data/Global_Sanctions_Source_Registry.xlsx` (research baseline 23 October 2026) lists 451 official sanctions, export-control and enforcement sources for 213 countries and jurisdictions, plus a topic map, a multilingual search lexicon, event field definitions and a collection plan. The dashboard shows it on the **Source Registry** page. To update it, replace the workbook and run `python tools/build_registry.py`. Enforcement and export-control sites from the registry are also searched daily (`official_sites` in `config.yaml`).

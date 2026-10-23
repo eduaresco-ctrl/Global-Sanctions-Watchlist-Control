@@ -141,6 +141,27 @@ sources:
       - {site: belastingdienst.nl,    lang: nl}  # Dutch Tax and Customs Administration
       - {site: om.nl,                 lang: nl}  # Dutch Public Prosecution Service
       - {site: agenciatributaria.es,  lang: es}  # Spanish tax and customs agency
+      - {site: abf.gov.au,           lang: en}  # Australian Border Force (from the Global Sanctions Source Registry)
+      - {site: finance.ec.europa.eu, lang: en}  # EU Commission sanctions/export control (from the Global Sanctions Source Registry)
+      - {site: eurojust.europa.eu,   lang: en}  # Eurojust (from the Global Sanctions Source Registry)
+      - {site: tulli.fi,             lang: fi}  # Finnish Customs (from the Global Sanctions Source Registry)
+      - {site: bafa.de,              lang: de}  # German export control (BAFA) (from the Global Sanctions Source Registry)
+      - {site: emsa.europa.eu,       lang: en}  # EU Maritime Safety Agency (from the Global Sanctions Source Registry)
+      - {site: dgft.gov.in,          lang: en}  # India DGFT (from the Global Sanctions Source Registry)
+      - {site: exportctrl.mod.gov.il,lang: en}  # Israel defence export control (from the Global Sanctions Source Registry)
+      - {site: mod.go.jp,            lang: ja}  # Japan Ministry of Defense (from the Global Sanctions Source Registry)
+      - {site: meti.go.jp,           lang: ja}  # Japan METI export control (from the Global Sanctions Source Registry)
+      - {site: sankcijas.fid.gov.lv, lang: lv}  # Latvia Financial Intelligence Unit (from the Global Sanctions Source Registry)
+      - {site: miti.gov.my,          lang: en}  # Malaysia MITI strategic trade (from the Global Sanctions Source Registry)
+      - {site: amp.gob.pa,           lang: es}  # Panama Maritime Authority (from the Global Sanctions Source Registry)
+      - {site: sars.gov.za,          lang: en}  # South African Revenue Service customs (from the Global Sanctions Source Registry)
+      - {site: yestrade.go.kr,       lang: ko}  # South Korea strategic trade (from the Global Sanctions Source Registry)
+      - {site: uaeiec.gov.ae,        lang: en}  # UAE Executive Office for Control & Non-Proliferation (from the Global Sanctions Source Registry)
+      - {site: trade.gov,            lang: en}  # US International Trade Administration (from the Global Sanctions Source Registry)
+      - {site: state.gov,            lang: en}  # US State Department (from the Global Sanctions Source Registry)
+      - {site: pmddtc.state.gov,     lang: en}  # US arms export controls (from the Global Sanctions Source Registry)
+      - {site: mofcom.gov.cn,        lang: zh}  # China Ministry of Commerce (from the Global Sanctions Source Registry)
+      - {site: mfat.govt.nz,         lang: en}  # New Zealand MFAT (from the Global Sanctions Source Registry)
 
   # Extra RSS feeds. Each shows up in the run log as "RSS <name>: N items"; N = 0 means the address is wrong or blocked.
   rss_feeds:

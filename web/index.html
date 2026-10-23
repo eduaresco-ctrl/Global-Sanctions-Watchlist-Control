@@ -122,6 +122,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     <button class="nav-btn" type="button" data-page="evasion">Evasion Signs</button>
     <button class="nav-btn" type="button" data-page="alerts">Alerts</button>
     <button class="nav-btn" type="button" data-page="library">Report Library</button>
+    <button class="nav-btn" type="button" data-page="registry">Source Registry</button>
     <button class="nav-btn" type="button" data-page="method">How It Works</button>
     <div class="src" id="source-line">Loading data…</div>
   </nav>
@@ -205,6 +206,29 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       <div class="tile span12"><h3>Report Library</h3><div class="sub">every event in the slicers above, newest first · tap a column header to sort · first 400 shown</div><div class="tbl tall" id="l-table"></div></div>
     </section>
 
+    <section class="page" id="p-registry" hidden>
+      <div class="tile span12"><h3>Global Sanctions Source Registry</h3>
+        <div class="sub" id="r-sub"></div>
+        <div class="slicers" style="margin:8px 0">
+          <label class="grow">Search<input id="r-q" type="search" placeholder="country, authority, topic, source ID"></label>
+          <label>Region<select id="r-region"><option value="">All</option></select></label>
+          <label>Source type<select id="r-type"><option value="">All</option></select></label>
+          <label>Priority<select id="r-prio"><option value="">All</option></select></label>
+          <a class="btn ghost" href="Global_Sanctions_Source_Registry.xlsx" download>Download workbook</a>
+        </div>
+        <div class="tabs" role="group" aria-label="Registry views" id="r-tabs">
+          <button type="button" data-rv="sources" aria-pressed="true">Sources</button>
+          <button type="button" data-rv="countries" aria-pressed="false">Country coverage</button>
+          <button type="button" data-rv="topics" aria-pressed="false">Topic map</button>
+          <button type="button" data-rv="lexicon" aria-pressed="false">Search lexicon</button>
+          <button type="button" data-rv="fields" aria-pressed="false">Event fields</button>
+          <button type="button" data-rv="plan" aria-pressed="false">Collection plan</button>
+        </div>
+        <p class="small" id="r-note" style="margin:8px 0"></p>
+        <div class="tbl tall" id="r-table"></div>
+      </div>
+    </section>
+
     <section class="page" id="p-method" hidden>
       <div class="tile span12"><h3>What this tool does</h3>
         <ul class="inf">
@@ -227,6 +251,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <script src="world.js"></script>
 <script src="data.js"></script>
+<script src="registry.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -435,6 +460,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       $("a-list").innerHTML = al.map(a => '<div class="alert ' + esc(a.severity) + '"><b>' + esc(a.type) + ': ' + esc(a.title) + '</b>' + esc(a.detail || "") + (a.urls && a.urls[0] ? ' <a href="' + esc(safe(a.urls[0])) + '" target="_blank" rel="noopener noreferrer">link</a>' : "") + '</div>').join("");
       table($("a-cor"), "ac", [{ k: "origin", label: "From" }, { k: "destination", label: "To" }, { k: "events", label: "Reports", r: true, f: r => fmt(r.events) }, { k: "recent", label: "Last 30 d", r: true }, { k: "prior", label: "Prior 30 d", r: true }, { k: "trend", label: "Trend" }, { k: "transit", label: "Via", cls: "small" }, { k: "main_items", label: "Main items", cls: "small" }, { k: "last_seen", label: "Last seen" }], SWD.corridors || [], ["events", -1], 40);
     } else if (p === "library") table($("l-table"), "lib", repCols, decorate(v), ["d", -1], 400);
+    else if (p === "registry") renderRegistry();
     else if (p === "method") {
       const M = SWD.model || { dimensions: [], bands: {} };
       table($("m-model"), "mm", [{ k: "name", label: "Dimension" }, { k: "cap", label: "Max points", r: true }, { k: "text", label: "What counts", cls: "small" }], M.dimensions || [], ["cap", -1]);
@@ -447,7 +473,43 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     document.querySelectorAll(".page").forEach(s => s.hidden = s.id !== "p-" + name);
     render(); window.scrollTo({ top: 0 });
   }
+  /* ---------- source registry ---------- */
+  const REG = window.SWREG || { sources: [], countries: [], topics: [], lexicon: [], fields: [], plan: [] };
+  let rview = "sources";
+  const linkCell = (u, t) => u ? '<a href="' + esc(safe(u)) + '" target="_blank" rel="noopener noreferrer">' + esc(t || u.replace(/^https?:\/\/(www\.)?/, "").slice(0, 60)) + '</a>' : "–";
+  const RV = {
+    sources: { rows: REG.sources, note: "Every official publication channel in the registry: lists, legal acts, announcements, enforcement and export-control pages. Organised by the publisher's country; the country targeted by a regime is a separate question.", def: ["pr", 1],
+      cols: [{ k: "co", label: "Country / jurisdiction" }, { k: "au", label: "Authority", cls: "small" }, { k: "nm", label: "Source", f: r => linkCell(r.url, r.nm) }, { k: "ty", label: "Type", cls: "small" }, { k: "pr", label: "Priority", cls: "small" }, { k: "ve", label: "Verification", cls: "small" }, { k: "fm", label: "Formats", cls: "small" }, { k: "no", label: "Notes", cls: "small" }] },
+    countries: { rows: REG.countries, note: "Coverage by country: whether a sanctions-specific source was found, and the research gaps. A source is not a live feed or a complete legal certification.", def: ["co", 1],
+      cols: [{ k: "co", label: "Country / jurisdiction" }, { k: "rg", label: "Region" }, { k: "st", label: "Coverage status", cls: "small" }, { k: "au", label: "Primary authority", cls: "small" }, { k: "url", label: "Website", f: r => linkCell(r.url) }, { k: "n", label: "Sources", r: true }, { k: "li", label: "Lists", r: true }, { k: "no", label: "Notes", cls: "small" }] },
+    topics: { rows: REG.topics, note: "Authorities for the eight reporting themes, with the legal and risk distinctions needed when reading a report.", def: ["th", 1],
+      cols: [{ k: "th", label: "Theme" }, { k: "ju", label: "Jurisdiction" }, { k: "au", label: "Authority", cls: "small" }, { k: "url", label: "Website", f: r => linkCell(r.url) }, { k: "ro", label: "Role", cls: "small" }, { k: "di", label: "Interpretation", cls: "small" }, { k: "ev", label: "Event types", cls: "small" }] },
+    lexicon: { rows: REG.lexicon, note: "Starter search terms in eight languages. Generic words such as sanctions can also mean unrelated penalties, so check the notes column.", def: ["co", 1],
+      cols: [{ k: "co", label: "Concept" }, { k: "en", label: "English", cls: "small" }, { k: "es", label: "Español", cls: "small" }, { k: "fr", label: "Français", cls: "small" }, { k: "de", label: "Deutsch", cls: "small" }, { k: "pt", label: "Português", cls: "small" }, { k: "ru", label: "Русский", cls: "small" }, { k: "ar", label: "العربية", cls: "small" }, { k: "zh", label: "中文", cls: "small" }, { k: "no", label: "Notes", cls: "small" }] },
+    fields: { rows: REG.fields, note: "Proposed data fields for one sanctions event, from provenance to routes and evidence.", def: ["gr", 1],
+      cols: [{ k: "gr", label: "Group" }, { k: "f", label: "Field" }, { k: "ty", label: "Type", cls: "small" }, { k: "rq", label: "Requirement", cls: "small" }, { k: "de", label: "Definition", cls: "small" }, { k: "ex", label: "Example", cls: "small" }] },
+    plan: { rows: REG.plan, note: "Suggested order for building collectors and reporting logic.", def: ["st", 1],
+      cols: [{ k: "st", label: "Stage", r: true }, { k: "fo", label: "Focus" }, { k: "so", label: "Sources to prioritise", cls: "small" }, { k: "wk", label: "Recommended work", cls: "small" }] },
+  };
+  function setupRegistry() {
+    const fill = (id, vals) => { const el = $(id); [...new Set(vals.filter(Boolean))].sort().forEach(v => { const o = document.createElement("option"); o.value = v; o.textContent = v; el.appendChild(o); }); };
+    fill("r-region", REG.sources.map(r => r.rg)); fill("r-type", REG.sources.map(r => r.ty)); fill("r-prio", REG.sources.map(r => r.pr));
+    ["r-region", "r-type", "r-prio"].forEach(i => $(i).addEventListener("change", render));
+    $("r-q").addEventListener("input", () => { clearTimeout(window.__rt); window.__rt = setTimeout(render, 200); });
+    document.querySelectorAll("#r-tabs button").forEach(b => b.addEventListener("click", () => { rview = b.dataset.rv; document.querySelectorAll("#r-tabs button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false")); render(); }));
+    $("r-sub").textContent = fmt(REG.sources.length) + " sources · " + fmt(REG.countries.length) + " countries and jurisdictions · research baseline " + (REG.baseline || "–") + ". Source identification is not a live-feed or complete legal certification.";
+  }
+  function renderRegistry() {
+    const V = RV[rview], q = $("r-q").value.trim().toLowerCase(), rg = $("r-region").value, ty = $("r-type").value, pr = $("r-prio").value;
+    const isS = rview === "sources";
+    ["r-region", "r-type", "r-prio"].forEach(i => $(i).closest("label").hidden = !isS);
+    let rows = V.rows.filter(r => (!q || Object.values(r).some(v => v != null && String(v).toLowerCase().includes(q))) && (!isS || ((!rg || r.rg === rg) && (!ty || r.ty === ty) && (!pr || r.pr === pr))));
+    if (rview === "countries" && rg) rows = rows.filter(r => r.rg === rg);
+    $("r-note").textContent = V.note + " Showing " + fmt(Math.min(rows.length, 500)) + " of " + fmt(rows.length) + ".";
+    table($("r-table"), "reg-" + rview, V.cols, rows, V.def, 500);
+  }
   /* ---------- start ---------- */
+  setupRegistry();
   setupSlicers();
   if (window.d3) { makeMap("o-map", false); makeMap("t-map", true); }
   ["f-period", "f-regime", "f-cat", "f-ctry", "f-level"].forEach(i => $(i).addEventListener("change", render));
