@@ -2,80 +2,50 @@
    RSS UK Foreign Office sanctions news: 20 items
    RSS UK Border Force: 20 items
    RSS Hong Kong government press releases (includes Customs): 100 items
-   Official websites (24 searched): 1118 headlines
+   Official websites (24 searched): 1080 headlines
       edition ES/es: 12 headlines
       edition MX/es: 12 headlines
-      edition FR/fr: 21 headlines
+      edition FR/fr: 17 headlines
       edition PT/pt: 0 headlines
       edition DE/de: 6 headlines
       edition NL/nl: 4 headlines
       edition BE/nl: 4 headlines
-      edition RU/ru: 98 headlines
-      edition UA/ru: 134 headlines
+      edition RU/ru: 132 headlines
+      edition UA/ru: 99 headlines
       edition TR/tr: 2 headlines
-      edition AE/ar: 60 headlines
+      edition AE/ar: 61 headlines
       edition SA/ar: 61 headlines
       edition HK/zh: 0 headlines
       edition TW/zh: 0 headlines
-   Google News: 2489 headlines
+   Google News: 2520 headlines
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctioned%20OR%20%22shadow%20flee... HTTPError
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctioned%20OR%20%22shadow%20flee... HTTPError
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28OFAC%20OR%20%22sanctions%20evasion... HTTPError
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28OFAC%20OR%20%22sanctions%20evasion... HTTPError
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanciones%20OR%20%22flota%20fantas... HTTPError
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanciones%20OR%20%22flota%20fantas... HTTPError
       GDELT es: 0 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20%22flotte%20fanto... HTTPError
       GDELT fr: 0 headlines
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28Sanktionen%20OR%20Schattenflotte%2... HTTPError
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28Sanktionen%20OR%20Schattenflotte%2... HTTPError
       GDELT de: 0 headlines
-   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%D1%81%D0%B0%D0%BD%D0%BA%D1%86%D0%... HTTPError
       GDELT ru: 0 headlines
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28yaptirim%20OR%20ambargo%29%20%28al... HTTPError
       GDELT tr: 0 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%D8%B9%D9%82%D9%88%D8%A8%D8%A7%D8%... HTTPError
       GDELT ar: 0 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%E5%88%B6%E8%A3%81%20OR%20%E7%A6%8... HTTPError
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%E5%88%B6%E8%A3%81%20OR%20%E7%A6%8... HTTPError
       GDELT zh: 0 headlines
    GDELT: 0 headlines
-      169 candidate headlines, 169 new
+      162 candidate headlines, 4 new
 [2/4] Reading articles...
-      links resolved: 163 of 163
-   ! https://news.usni.org/2026/10/13/french-navy-seizes-suspected-shadow-fleet-tanker-in-india... HTTPError
-   ! https://www.reuters.com/world/france-seizes-another-shadow-fleet-tanker-russia-decries-pir... HTTPError
-   ! https://sfg.media/en/a/us-shadow-fleet-tankers-new-owners/... HTTPError
-   ! https://www.rfi.fr/en/france/20261013-france-intercepts-russian-shadow-fleet-tanker-in-ope... HTTPError
-   ! https://finway.com.ua/en/trump-administration-allows-sale-sanctioned/... HTTPError
-   ! https://streamlinefeed.co.ke/news/french-navy-intercepts-suspected-russian-shadow-fleet-ta... HTTPError
-   ! https://slguardian.org/russia-expands-flagged-fleet-as-sanctioned-tankers-seek-shelter/... HTTPError
-   ! https://www.reuters.com/world/europe/russia-calls-french-seizure-alleged-shadow-fleet-tank... HTTPError
-   ! https://aroundprague.cz/en/news/world/france-detains-russian-shadow-fleet-tanker-near-reun... HTTPError
-   ! https://news.az/news/french-navy-intercepts-and-boards-shadow-fleet-ship-video... HTTPError
-   ! https://informat.ro/en/international/france-detains-df-peak-tanker-suspected-of-being-part... HTTPError
-   ! https://www.newsofbahrain.com/en/article/france-seizes-suspected-russian-shadow-fleet-oil-... HTTPError
-   ! https://www.hstoday.us/subject-matter-areas/maritime-security/why-maritime-enforcement-mus... HTTPError
-   ! https://news.az/news/russia-reflags-107-tankers-as-sanctions-pressure-grows... HTTPError
-   ! https://tradersunion.com/news/financial-news/show/3490528-russia-expands-tanker-fleet-sanc... HTTPError
-   ! https://www.democrata.es/internacional/suecia-autoriza-la-salida-del-petrolero-ruso-de-la-... HTTPError
-   ! https://24-horas.mx/mundo/francia-barco-ilegal-petroleo/... HTTPError
-   ! https://albertonews.com/nacionales/francia-incauta-el-petrolero-df-peak-vinculado-a-la-flo... HTTPError
-   ! https://elcooperante.com/francia-intercepta-petrolero-de-la-flota-fantasma-rusa-que-habria... HTTPError
-   ! https://www.lesechos.fr/monde/europe/un-petrolier-de-la-flotte-fantome-russe-arraisonne-pa... HTTPError
-   ! https://www.liberation.fr/international/europe/flotte-fantome-russe-un-petrolier-battant-p... HTTPError
-   ! https://www.rfi.fr/fr/france/20261014-flotte-fant%C3%B4me-la-france-ouvre-une-enqu%C3%AAte... HTTPError
-   ! https://www.leparisien.fr/faits-divers/un-petrolier-suspecte-dappartenir-a-la-flotte-fanto... HTTPError
-   ! https://www.ouest-france.fr/region-la-reunion/flotte-fantome-un-navire-arraisonne-pres-de-... HTTPError
-   ! https://www.zinfos974.com/intercepte-au-large-le-petrolier-de-la-flotte-fantome-russe-arri... HTTPError
-   ! https://fr.flows.be/maritime/2026/10/la-france-arraisonne-un-petrolier-de-la-flotte-fantom... HTTPError
-   ! https://news.zerkalo.io/europe/138395.html... HTTPError
-   ! https://korrespondent.net/world/4919509-frantsyia-zaderzhala-tanker-tenevoho-flota-rf... HTTPError
-   ! https://prospect.com.ru/news/7110186/vashington-nameren-vyvesti-nekotorye-tankery-iz-kateg... HTTPError
-   ! https://prospect.com.ru/news/7094169/frantsuzskie-voennye-zahvatili-tanker-tak-nazyvaemogo... HTTPError
-   ! https://sfg.media/a/us-shadow-fleet-tankers-new-owners/... HTTPError
-   ! https://prospect.com.ru/news/7099323/ssha-mogut-snyat-sanktsii-s-korablej-tenevogo-flota-r... HTTPError
-   ! https://www.youlyou.com/69398... HTTPError
-   ! https://www.usnews.com/news/top-news/articles/2026-10-15/us-plan-to-ease-shadow-fleet-sanc... ReadTimeout
-      read in full: 132; headline + snippet only: 37
+      links resolved: 4 of 4
+      read in full: 4; headline + snippet only: 0
 [3/4] Extracting facts and storing...
-      skipped one article (TypeError: sequence item 0: expected str instance, NoneType found): French Navy Boards Sanctioned Russian Shadow Tanker DF Peak in Indian Ocean
-      skipped one article (TypeError: sequence item 0: expected str instance, NoneType found): France seizes Russian ‘shadow fleet’ oil tanker in Indian Ocean
-      NER supplemented 46 article(s) (unrecognised place names logged to ner_places for review)
-      stored 167, of which 103 are sanctions-related seizure reports
+      NER supplemented 3 article(s) (unrecognised place names logged to ner_places for review)
+      stored 4, of which 3 are sanctions-related seizure reports
 [4/4] Analysing and building report...
 Done. 74 events in report, 1 alerts.
 Open: /home/runner/work/Sanctions-seizure-watch/Sanctions-seizure-watch/docs/index.html
