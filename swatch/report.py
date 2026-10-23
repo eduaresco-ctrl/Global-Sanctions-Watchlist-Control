@@ -118,9 +118,10 @@ def write_all(res, out_dir, cfg, demo=False):
         src = os.path.join(ROOT, "web", f)
         if os.path.exists(src):
             shutil.copy2(src, os.path.join(out_dir, f))
-    xl = os.path.join(ROOT, "data", "Global_Sanctions_Source_Registry.xlsx")
-    if os.path.exists(xl):
-        shutil.copy2(xl, os.path.join(out_dir, "Global_Sanctions_Source_Registry.xlsx"))
+    for ext in ("xlsx", "csv", "json"):
+        xl = os.path.join(ROOT, "data", "Global_Sanctions_Source_Registry." + ext)
+        if os.path.exists(xl):
+            shutil.copy2(xl, os.path.join(out_dir, "Global_Sanctions_Source_Registry." + ext))
     return {"events": len(ev), "alerts": len(res["alerts"])}
 
 
