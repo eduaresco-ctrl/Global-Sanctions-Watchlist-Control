@@ -118,6 +118,9 @@ def write_all(res, out_dir, cfg, demo=False):
         src = os.path.join(ROOT, "web", f)
         if os.path.exists(src):
             shutil.copy2(src, os.path.join(out_dir, f))
+    hb = os.path.join(ROOT, "data", "Handbook_Strategic_Trade_Controls.pdf")
+    if os.path.exists(hb):
+        shutil.copy2(hb, os.path.join(out_dir, "Handbook_Strategic_Trade_Controls.pdf"))
     for ext in ("xlsx", "csv", "json"):
         xl = os.path.join(ROOT, "data", "Global_Sanctions_Source_Registry." + ext)
         if os.path.exists(xl):
