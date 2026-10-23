@@ -512,7 +512,7 @@ def _route(t, source_country):
     res = {
         "origin": origin, "origin_place": o[3] if o and o[2] == "place" else None,
         "destination": dest, "destination_place": d[3] if d and d[2] == "place" else None,
-        "transit": "|".join(transit) or None,
+        "transit": "|".join(x for x in transit if x) or None,
         "seizure_country": seizure_country, "seizure_place": seizure_place, "location_conf": conf,
     }
     corridor = None

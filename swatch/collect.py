@@ -159,7 +159,10 @@ def gdelt(query, lang, days, maxrec=100):
     url = ("https://api.gdeltproject.org/api/v2/doc/doc?query=" + quote(q) +
            f"&mode=artlist&maxrecords={maxrec}&format=json&sort=datedesc&timespan={days}d")
     r = _get(url, timeout=40)
-    time.sleep(6)  # GDELT asks for <= 1 request / 5 s
+    if r is None:                      # GDELT often answers 429 when called too fast: wait and try once more
+        time.sleep(15)
+        r = _get(url, timeout=40)
+    time.sleep(8)  # GDELT asks for <= 1 request / 5 s
     if r is None:
         return []
     try:

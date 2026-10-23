@@ -233,12 +233,12 @@ def extract(title, text="", source_country=None):
     transport = _transport(t, vessel_seized, in_container)
     rec.update({
         "relevant": 1, "category": category, "item": item, "cargo": cargo,
-        "regimes": "|".join(regimes) or None, "authorities": "|".join(authorities) or None, "agency": agency,
+        "regimes": "|".join(x for x in regimes if x) or None, "authorities": "|".join(x for x in authorities if x) or None, "agency": agency,
         "qty_kg": kg, "qty_barrels": barrels, "qty_units": units, "unit_type": unit_type, "value_usd": value,
         "vessel": vessel, "imo": imo.group(1) if imo else None, "flag": flag,
-        "container_numbers": "; ".join(B._containers(raw)) or None,
+        "container_numbers": "; ".join(x for x in B._containers(raw) if x) or None,
         "transport": transport, "in_container": in_container, "arrests": arrests,
-        "indicators": "|".join(indicators) or None,
+        "indicators": "|".join(x for x in indicators if x) or None,
         "sanctioned_party": 1 if "sanctioned_party" in indicators else 0, "actor": actor,
     })
     rec.update(route)
@@ -251,7 +251,7 @@ def extract(title, text="", source_country=None):
         q.append(f"{units:,.0f} {unit_type}")
     if value:
         q.append(f"~${value / 1e6:,.1f}m" if value >= 1e5 else f"~${value:,.0f}")
-    bits = [item + (f" ({', '.join(q)})" if q else ""), f"cargo: {cargo}" if cargo else None, "/".join(re.split(r" [/(]", r)[0] for r in regimes) or None,
+    bits = [item + (f" ({', '.join(q)})" if q else ""), f"cargo: {cargo}" if cargo else None, "/".join(re.split(r" [/(]", r)[0] for r in regimes if r) or None,
             ("route: " + route["route"]) if route["route"] else None, f"flag: {flag}" if flag else None,
             f"{arrests} arrests" if arrests else None,
             ("signs: " + ", ".join(i.replace("_", " ") for i in indicators if i != "concealment")) if [i for i in indicators if i != "concealment"] else None]
