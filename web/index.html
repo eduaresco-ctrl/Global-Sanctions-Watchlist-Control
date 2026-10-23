@@ -11,7 +11,7 @@
   color-scheme: light;
   --frame: #a7a1a1; --canvas: #ffffff; --tile: #ffffff; --tile-edge: #d9d4d4;
   --ink: #252423; --muted: #605e5c; --kpi: #4d4a48; --navy: #1e3a5c; --navy-label: #203f66; --sky: #a9d3f1;
-  --col: #858b8b; --dot: #3c8ad8; --dot-edge: #1d5fa6; --land: #e6e6e6; --land-edge: #c9c9c9; --sea: #f2f2f2;
+  --col: #858b8b; --dot: #3c8ad8; --dot-edge: #1d5fa6; --land: #f1ede2; --land-edge: #cfc8b4; --sea: #d9e8f4;
   --nav-on: #1e3a5c; --th: #a6a6a6; --warn: #c0392b; --ok: #7fa68e; --amber: #e0a12a;
   --font: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
 }
@@ -74,6 +74,10 @@ select, input[type="search"] { font: 400 .88rem var(--font); color: var(--ink); 
 .cols .x { font-size: .68rem; color: var(--ink); white-space: nowrap; }
 .map { position: relative; width: 100%; aspect-ratio: 16 / 9; background: var(--sea); border-radius: 4px; overflow: hidden; touch-action: none; }
 .map svg { width: 100%; height: 100%; display: block; }
+.ctry { fill: var(--land); stroke: var(--land-edge); stroke-width: .6; vector-effect: non-scaling-stroke; }
+.ctry.hit { stroke: #3f8f6e; }
+.clab { font-family: var(--font); fill: #6b675c; text-anchor: middle; pointer-events: none; paint-order: stroke; stroke: rgba(255,255,255,.75); stroke-width: 2.2px; stroke-linejoin: round; }
+.clab.hit { fill: #1f5c44; font-weight: 700; }
 .land { fill: var(--land); stroke: var(--land-edge); stroke-width: .6; }
 .dot { fill: var(--dot); stroke: var(--dot-edge); stroke-width: 1; cursor: pointer; fill-opacity: .8; }
 .dot.on { fill: var(--navy); stroke: #fff; }
@@ -163,7 +167,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       </div>
       <div class="tile span3"><h3>Reports per week</h3><div class="cols" id="o-weeks"></div></div>
       <div class="tile span5"><h3>What was seized</h3><div class="hbars sky" id="o-cats"></div></div>
-      <div class="tile span8"><h3>Where goods and vessels were seized</h3><div class="sub">dot size = reports · red = a high-score event there · tap a dot to open it in the Report Library</div><div class="map" id="o-map"></div><div class="map-info" id="o-map-info"></div></div>
+      <div class="tile span8"><h3>Where goods and vessels were seized</h3><div class="sub">dot size = reports · red = a high-score event there · green shading = reports in that country · tap a dot to open it in the Report Library</div><div class="map" id="o-map"></div><div class="map-info" id="o-map-info"></div></div>
       <div class="tile span4"><h3>Reports by country</h3><div class="hbars fill" id="o-countries"></div></div>
       <div class="tile span12"><h3>Latest reports</h3><div class="tbl" id="o-latest"></div></div>
     </section>
@@ -350,13 +354,19 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     const path = d3.geoPath(proj);
     const svg = d3.select(box).append("svg").attr("viewBox", "0 0 " + W + " " + H).attr("role", "img").attr("aria-label", "World map");
     const g = svg.append("g");
-    if (window.CEN_WORLD && window.topojson) g.append("path").attr("class", "land").attr("d", path(topojson.feature(CEN_WORLD.land, CEN_WORLD.land.objects.land)));
+    let geo = null, labG = null;
+    if (window.CEN_WORLD && window.topojson && CEN_WORLD.countries) {
+      geo = topojson.feature(CEN_WORLD.countries, CEN_WORLD.countries.objects.countries).features.filter(f => f.properties.name !== "Antarctica").map(f => { const b = path.bounds(f); return { f, name: ALIAS[f.properties.name] || f.properties.name, c: path.centroid(f), w: b[1][0] - b[0][0], hit: 0 }; });
+      g.append("g").selectAll("path").data(geo).join("path").attr("class", "ctry").attr("d", d => path(d.f));
+      labG = g.append("g");
+      labG.selectAll("text").data(geo.filter(d => isFinite(d.c[0]))).join("text").attr("class", "clab").attr("x", d => d.c[0]).attr("y", d => d.c[1]).text(d => d.name);
+    } else if (window.CEN_WORLD && window.topojson) g.append("path").attr("class", "land").attr("d", path(topojson.feature(CEN_WORLD.land, CEN_WORLD.land.objects.land)));
     const layerG = g.append("g");
     const tip = document.createElement("div"); tip.className = "map-tip"; tip.hidden = true;
     const zb = document.createElement("div"); zb.className = "zoom-btns";
     zb.innerHTML = '<button type="button" data-z="in" aria-label="Zoom in">+</button><button type="button" data-z="out" aria-label="Zoom out">−</button><button type="button" data-z="reset" aria-label="Reset view">⟲</button>';
     box.append(zb, tip);
-    const M = { proj, svg, layer: layerG, tip, k: 1, W, H, box };
+    const M = { proj, svg, layer: layerG, tip, k: 1, W, H, box, geo, labG };
     M.zoom = d3.zoom().scaleExtent([1, 12]).translateExtent([[0, 0], [W, H]]).on("zoom", e => { g.attr("transform", e.transform); M.k = e.transform.k; scale(M); tip.hidden = true; });
     svg.call(M.zoom).on("dblclick.zoom", null);
     zb.addEventListener("click", e => { const z = e.target.closest("button"); if (!z) return; if (z.dataset.z === "in") svg.call(M.zoom.scaleBy, 1.6); else if (z.dataset.z === "out") svg.call(M.zoom.scaleBy, 1 / 1.6); else svg.transition().duration(300).call(M.zoom.transform, d3.zoomIdentity); });
@@ -366,6 +376,19 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     M.layer.selectAll("circle").attr("r", function () { return this.__r / Math.sqrt(M.k); }).attr("stroke-width", 1 / Math.sqrt(M.k));
     M.layer.selectAll("path.route").attr("stroke-width", function () { return this.__w / Math.sqrt(M.k); });
     M.layer.selectAll("text.lab").attr("font-size", 9 / Math.sqrt(M.k));
+    if (M.labG) M.labG.selectAll("text").attr("font-size", d => (d.hit ? 9.5 : 8) / M.k).style("stroke-width", 2.2 / M.k + "px")
+      .attr("display", d => ((d.hit && (d.top || M.k >= 2.5)) || d.w * M.k >= d.name.length * 3.9) ? null : "none").classed("hit", d => d.hit > 0);
+  }
+  const ALIAS = { "United States of America": "United States", "Czechia": "Czech Republic", "Dem. Rep. Congo": "Democratic Republic of the Congo", "Central African Rep.": "Central African Republic", "Eq. Guinea": "Equatorial Guinea", "S. Sudan": "South Sudan", "Bosnia and Herz.": "Bosnia and Herzegovina", "Dominican Rep.": "Dominican Republic", "Macedonia": "North Macedonia", "W. Sahara": "Western Sahara", "Solomon Is.": "Solomon Islands", "Falkland Is.": "Falkland Islands", "N. Cyprus": "Northern Cyprus", "eSwatini": "Eswatini", "Fr. S. Antarctic Lands": "French Southern Lands" };
+  /* colour each country by how many reports are in it (green = more) */
+  function shade(M, rows) {
+    if (!M.geo) return;
+    const n = new Map(); rows.forEach(e => { if (e.c) n.set(e.c, (n.get(e.c) || 0) + 1); });
+    const mx = Math.max(1, ...n.values()), col = d3.scaleSequentialSqrt(d3.interpolateRgb("#d3ecdd", "#4f9f7c")).domain([0, mx]);
+    M.geo.forEach(d => { d.hit = n.get(d.name) || 0; }); const cut = [...n.values()].sort((a, b) => b - a)[7] || 1; M.geo.forEach(d => { d.top = d.hit >= cut && d.w > 12; });
+    M.svg.selectAll("path.ctry").style("fill", d => d.hit ? col(d.hit) : null).classed("hit", d => d.hit > 0)
+      .on("mousemove", (ev, d) => { if (d.hit) showTip(M, ev, "<b>" + esc(d.name) + "</b><br>" + fmt(d.hit) + " report" + (d.hit === 1 ? "" : "s")); }).on("mouseleave", () => M.tip.hidden = true);
+    scale(M);
   }
   function showTip(M, ev, html) { const r = M.box.getBoundingClientRect(); M.tip.innerHTML = html; M.tip.hidden = false; M.tip.style.left = Math.min(ev.clientX - r.left + 12, r.width - 230) + "px"; M.tip.style.top = Math.max(4, ev.clientY - r.top + 12) + "px"; }
   const pt = (c, p) => (p && GP[p]) ? [GP[p][0], GP[p][1]] : (c && GC[c]) ? GC[c] : null;
@@ -373,7 +396,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
   const worst = list => list.reduce((w, e) => LEVELRANK[e.lv] > LEVELRANK[w] ? e.lv : w, "Low");
 
   function drawOverviewMap(rows) {
-    const M = maps["o-map"]; M.layer.selectAll("*").remove();
+    const M = maps["o-map"]; M.layer.selectAll("*").remove(); shade(M, rows);
     const g = new Map();
     rows.forEach(e => { const p = pt(e.c, e.p); if (!p) return; const k = e.p && GP[e.p] ? e.p : e.c; const o = g.get(k) || { name: k, p, list: [] }; o.list.push(e); g.set(k, o); });
     const arr = [...g.values()].sort((a, b) => a.list.length - b.list.length);
@@ -399,7 +422,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
   }
   function arc(M, p, q, bend) { const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2 - Math.hypot(q[0] - p[0], q[1] - p[1]) * bend; return "M" + p + "Q" + [mx, my] + " " + q; }
   function drawRouteMap(rows) {
-    const M = maps["t-map"]; M.layer.selectAll("*").remove();
+    const M = maps["t-map"]; M.layer.selectAll("*").remove(); shade(M, rows);
     if (layer === "routes") {
       const rm = new Map();
       rows.forEach(e => { const nd = nodesOf(e); if (!nd) return; const k = nd.map(x => x.n).join(" → "); const o = rm.get(k) || { k, nd, list: [] }; o.list.push(e); rm.set(k, o); });
