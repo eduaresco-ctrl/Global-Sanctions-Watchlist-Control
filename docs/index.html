@@ -42,6 +42,16 @@ select, input[type="search"] { font: 400 .88rem var(--font); color: var(--ink); 
 .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .kpis .tile { align-items: center; justify-content: center; gap: 2px; padding-block: 16px; }
 .kpis .wide { grid-column: span 2; }
+.kpi-btn { font: inherit; cursor: pointer; display: flex; flex-direction: column; border: 1px solid var(--tile-edge); width: 100%; }
+.kpi-btn:hover, .kpi-btn:focus-visible { outline: 2px solid var(--navy); }
+.kpi-more { font-size: .72rem; color: var(--muted); }
+.ov { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 50; display: flex; align-items: flex-start; justify-content: center; padding: 4vh 12px; }
+.ov[hidden] { display: none; }
+.ov-box { background: #fff; border-radius: 14px; width: min(1100px, 100%); max-height: 92vh; display: flex; flex-direction: column; overflow: hidden; }
+.ov-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--tile-edge); }
+.ov-head h3 { margin: 0; flex: 1; }
+.ov-body { overflow: auto; padding: 12px 16px; }
+.ov-body .tbl { max-height: none; }
 .kpi-v { font-size: 2.2rem; font-weight: 600; color: var(--kpi); font-variant-numeric: tabular-nums; line-height: 1.1; text-align: center; overflow-wrap: anywhere; }
 .kpi-k { font-size: 1.05rem; font-weight: 600; color: var(--navy-label); text-align: center; }
 .hbars { display: grid; gap: 6px; max-height: 300px; overflow-y: auto; padding-right: 4px; }
@@ -145,11 +155,11 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
 
     <section class="page" id="p-overview">
       <div class="span4 kpis">
-        <div class="tile wide"><span class="kpi-v" id="k-reports">–</span><span class="kpi-k">Seizure reports (events)</span></div>
-        <div class="tile"><span class="kpi-v" id="k-countries">–</span><span class="kpi-k">Countries</span></div>
-        <div class="tile"><span class="kpi-v" id="k-high">–</span><span class="kpi-k">High evasion score</span></div>
-        <div class="tile"><span class="kpi-v" id="k-vessels">–</span><span class="kpi-k">Vessels seized</span></div>
-        <div class="tile"><span class="kpi-v" id="k-value">–</span><span class="kpi-k">Stated value, USD m</span></div>
+        <button type="button" class="tile kpi-btn wide" data-kpi="reports" aria-haspopup="dialog" title="Tap to see the list"><span class="kpi-v" id="k-reports">–</span><span class="kpi-k">Seizure reports (events)</span><span class="kpi-more">tap to see the list ›</span></button>
+        <button type="button" class="tile kpi-btn" data-kpi="countries" aria-haspopup="dialog" title="Tap to see the list"><span class="kpi-v" id="k-countries">–</span><span class="kpi-k">Countries</span><span class="kpi-more">tap to see the list ›</span></button>
+        <button type="button" class="tile kpi-btn" data-kpi="high" aria-haspopup="dialog" title="Tap to see the list"><span class="kpi-v" id="k-high">–</span><span class="kpi-k">High evasion score</span><span class="kpi-more">tap to see the list ›</span></button>
+        <button type="button" class="tile kpi-btn" data-kpi="vessels" aria-haspopup="dialog" title="Tap to see the list"><span class="kpi-v" id="k-vessels">–</span><span class="kpi-k">Vessels seized</span><span class="kpi-more">tap to see the list ›</span></button>
+        <button type="button" class="tile kpi-btn" data-kpi="value" aria-haspopup="dialog" title="Tap to see the list"><span class="kpi-v" id="k-value">–</span><span class="kpi-k">Stated value, USD m</span><span class="kpi-more">tap to see the list ›</span></button>
       </div>
       <div class="tile span3"><h3>Reports per week</h3><div class="cols" id="o-weeks"></div></div>
       <div class="tile span5"><h3>What was seized</h3><div class="hbars sky" id="o-cats"></div></div>
@@ -252,6 +262,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
         </ul></div>
     </section>
   </main>
+  <div class="ov" id="ov" hidden role="dialog" aria-modal="true" aria-labelledby="ov-h"><div class="ov-box"><div class="ov-head"><h3 id="ov-h"></h3><button class="btn ghost" id="ov-x" type="button">Close</button></div><div class="ov-body"><div class="sub" id="ov-sub"></div><div class="tbl" id="ov-t"></div></div></div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
@@ -426,7 +437,9 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
 
   /* ---------- render ---------- */
   const routeKey = e => { const loc = e.lc === "actor" ? null : e.c; return e.o && e.de && e.o !== e.de ? e.o + " → " + e.de : (e.o && loc && e.o !== loc && !e.de) ? e.o + " → " + loc : (e.de && loc && e.de !== loc && !e.o) ? loc + " → " + e.de : null; };
-  function render() {
+  let curKpi = null;
+  function render() { renderPage(); if (curKpi && !$("ov").hidden) openKpi(curKpi, true); }
+  function renderPage() {
     const v = view(), p = page;
     if (p === "overview") {
       const vessels = new Set(v.filter(e => e.ve || e.imo).map(e => e.imo || e.ve));
@@ -531,6 +544,34 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     table($("r-table"), "reg-" + rview, V.cols, rows, V.def, 500);
   }
   $("e-sel-clear").addEventListener("click", ev => { ev.preventDefault(); evSel = null; render(); });
+  /* ---------- tap a headline number to see the list behind it ---------- */
+  function openKpi(kind, quiet) {
+    curKpi = kind;
+    const v = view(), ov = $("ov"), say = (t, sub) => { $("ov-h").textContent = t; $("ov-sub").textContent = sub || ""; };
+    const byDate = rows => decorate(rows.slice().sort((a, b) => b.d.localeCompare(a.d)));
+    if (kind === "reports") { say("Seizure reports (" + fmt(v.length) + ")", "newest first · tap a headline to open the article · tap a column to sort"); table($("ov-t"), "ov-r", repCols, byDate(v), ["d", -1], 500); }
+    else if (kind === "high") { const h = v.filter(e => e.lv === "High"); say("High evasion score (" + fmt(h.length) + ")", "reports scoring High (50 or more, with at least two kinds of evidence)"); table($("ov-t"), "ov-h", repCols, byDate(h), ["sc", -1]); }
+    else if (kind === "countries") {
+      const m = new Map(); v.forEach(e => { if (!e.c) return; const o = m.get(e.c) || { c: e.c, n: 0, high: 0, last: "", at: 0 }; o.n++; if (e.lc === "actor") o.at++; if (e.lv === "High") o.high++; if (e.d > o.last) o.last = e.d; m.set(e.c, o); });
+      const rows = [...m.values()];
+      say("Countries (" + rows.length + ")", "countries where something was seized · tap a country to filter the whole dashboard to it");
+      table($("ov-t"), "ov-c", [{ k: "c", label: "Country", f: r => '<a href="#" data-pick="' + esc(r.c) + '">' + esc(r.c) + '</a>' }, { k: "n", label: "Reports", r: true }, { k: "high", label: "High score", r: true }, { k: "at", label: "Of which at sea, seized by this country", r: true }, { k: "last", label: "Latest" }], rows, ["n", -1]);
+      $("ov-t").querySelectorAll("a[data-pick]").forEach(a => a.addEventListener("click", ev => { ev.preventDefault(); const c = a.dataset.pick; if ([...$("f-ctry").options].some(o => o.value === c)) $("f-ctry").value = c; closeKpi(); render(); }));
+    } else if (kind === "vessels") {
+      const m = new Map(); v.filter(e => e.ve || e.imo).forEach(e => { const k = e.imo || e.ve; const o = m.get(k) || { ve: e.ve || "", imo: e.imo || "", fl: e.fl || "", n: 0, last: "", where: "", ur: e.ur, ti: e.ti, ou: e.ou }; o.n++; if (!o.ve && e.ve) o.ve = e.ve; if (!o.fl && e.fl) o.fl = e.fl; if (e.d > o.last) { o.last = e.d; o.where = [e.p, e.c].filter(Boolean).join(", "); o.ur = e.ur; o.ti = e.ti; o.ou = e.ou; } m.set(k, o); });
+      const rows = [...m.values()]; say("Vessels (" + rows.length + ")", "vessels named in the reports · one row per IMO number or name · tap the headline to read the latest report");
+      table($("ov-t"), "ov-v", [{ k: "ve", label: "Vessel" }, { k: "imo", label: "IMO" }, { k: "fl", label: "Flag" }, { k: "n", label: "Reports", r: true }, { k: "last", label: "Latest" }, { k: "where", label: "Last seen", cls: "small" }, { k: "ti", label: "Latest report", f: link }], rows, ["last", -1]);
+    } else if (kind === "value") {
+      const w = v.filter(e => e.v); say("Stated value (" + fmt(w.length) + " reports)", "reports that state a value in USD; figures over $1 billion are ignored because they are usually market or sanctions totals, not the seizure. Values are read from news text and are approximate.");
+      table($("ov-t"), "ov-val", [{ k: "v", label: "Value, USD", r: true, f: r => "$" + (r.v >= 1e6 ? fmt(+(r.v / 1e6).toFixed(1)) + "m" : fmt(Math.round(r.v))) }, ...repCols.filter(c => c.k !== "q")], decorate(w), ["v", -1]);
+    }
+    ov.hidden = false; if (!quiet) $("ov-x").focus();
+  }
+  function closeKpi() { curKpi = null; $("ov").hidden = true; }
+  document.querySelectorAll(".kpi-btn").forEach(b => b.addEventListener("click", () => openKpi(b.dataset.kpi)));
+  $("ov-x").addEventListener("click", closeKpi);
+  $("ov").addEventListener("click", e => { if (e.target === $("ov")) closeKpi(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeKpi(); });
   /* ---------- start ---------- */
   setupRegistry();
   setupSlicers();

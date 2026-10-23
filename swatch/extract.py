@@ -45,7 +45,7 @@ def _value_usd(t):
             val = v * mult * cur
             if mult == 1.0 and val < 1000:                  # "$5" or "EUR 20" is a price, not the value of a seizure
                 continue
-            if val <= 5e11:
+            if val <= 1e9:                                  # above $1bn is almost always a market or sanctions total, not the seizure
                 best = max(best, val)
     return best or None
 
