@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+<meta http-equiv="Cache-Control" content="no-cache">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sanctions Seizure Watch</title>
@@ -275,8 +276,8 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
-<script src="world.js"></script>
-<script src="data.js"></script>
+<script src="world.js?v=20261024"></script>
+<script src="data.js?v=20261024"></script>
 <script src="registry.js"></script>
 <script>
 (() => {
@@ -376,8 +377,8 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     M.layer.selectAll("circle").attr("r", function () { return this.__r / Math.sqrt(M.k); }).attr("stroke-width", 1 / Math.sqrt(M.k));
     M.layer.selectAll("path.route").attr("stroke-width", function () { return this.__w / Math.sqrt(M.k); });
     M.layer.selectAll("text.lab").attr("font-size", 9 / Math.sqrt(M.k));
-    if (M.labG) M.labG.selectAll("text").attr("font-size", d => (d.hit ? 9.5 : 8) / M.k).style("stroke-width", 2.2 / M.k + "px")
-      .attr("display", d => ((d.hit && (d.top || M.k >= 2.5)) || d.w * M.k >= d.name.length * 3.9) ? null : "none").classed("hit", d => d.hit > 0);
+    if (M.labG) M.labG.selectAll("text").attr("font-size", d => (d.hit ? 11 : 9) / M.k).style("stroke-width", 2.2 / M.k + "px")
+      .attr("display", d => ((d.hit && (d.top || M.k >= 2.5)) || d.w * M.k >= d.name.length * 4.6) ? null : "none").classed("hit", d => d.hit > 0);
   }
   const ALIAS = { "United States of America": "United States", "Czechia": "Czech Republic", "Dem. Rep. Congo": "Democratic Republic of the Congo", "Central African Rep.": "Central African Republic", "Eq. Guinea": "Equatorial Guinea", "S. Sudan": "South Sudan", "Bosnia and Herz.": "Bosnia and Herzegovina", "Dominican Rep.": "Dominican Republic", "Macedonia": "North Macedonia", "W. Sahara": "Western Sahara", "Solomon Is.": "Solomon Islands", "Falkland Is.": "Falkland Islands", "N. Cyprus": "Northern Cyprus", "eSwatini": "Eswatini", "Fr. S. Antarctic Lands": "French Southern Lands" };
   /* colour each country by how many reports are in it (green = more) */
@@ -385,7 +386,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     if (!M.geo) return;
     const n = new Map(); rows.forEach(e => { if (e.c) n.set(e.c, (n.get(e.c) || 0) + 1); });
     const mx = Math.max(1, ...n.values()), col = d3.scaleSequentialSqrt(d3.interpolateRgb("#d3ecdd", "#4f9f7c")).domain([0, mx]);
-    M.geo.forEach(d => { d.hit = n.get(d.name) || 0; }); const cut = [...n.values()].sort((a, b) => b - a)[7] || 1; M.geo.forEach(d => { d.top = d.hit >= cut && d.w > 12; });
+    M.geo.forEach(d => { d.hit = n.get(d.name) || 0; }); const cut = [...n.values()].sort((a, b) => b - a)[13] || 1; M.geo.forEach(d => { d.top = d.hit >= cut && d.w > 8; });
     M.svg.selectAll("path.ctry").style("fill", d => d.hit ? col(d.hit) : null).classed("hit", d => d.hit > 0)
       .on("mousemove", (ev, d) => { if (d.hit) showTip(M, ev, "<b>" + esc(d.name) + "</b><br>" + fmt(d.hit) + " report" + (d.hit === 1 ? "" : "s")); }).on("mouseleave", () => M.tip.hidden = true);
     scale(M);
