@@ -1,0 +1,161 @@
+# =====================================================================
+#  SANCTIONS SEIZURE WATCH - configuration
+#  Same layout as Seizure Watch. Everything you may want to tune is here; comments explain each block.
+#  What counts: an article that has (1) a sanctions cue (sanctions, embargo, export controls, dual-use, shadow fleet,
+#  OFAC ...), (2) a seizure cue (seized, detained, impounded, intercepted ...) and (3) something that was seized
+#  (a vessel, oil, dual-use goods, weapons, luxury goods, cash, minerals ...). The word lists are in swatch/sanctions.py.
+# =====================================================================
+
+run:
+  lookback_days: 2            # how far back each daily run searches (2 = safe overlap)
+  max_articles_per_run: 1200  # cap on article downloads per run (official sources are read first)
+  fetch_full_text: true       # false = headline/snippet only (faster, less accurate)
+  resolve_google_links: true  # needs the optional 'googlenewsdecoder' package (in requirements.txt)
+  report_days: 365            # how much history the dashboard shows
+
+sources:
+  google_news:
+    enabled: true
+    delay_seconds: 1.0
+    # Each edition = one Google News country/language front page. The extractor reads these languages:
+    # English, Spanish, French, Portuguese, Dutch, German, Russian, Arabic, Chinese, Turkish.
+    # To add another language (Korean, Persian, Greek, Finnish, Japanese, Ukrainian ...) add its words to swatch/sanctions.py first.
+    editions:
+      - {lang: en, hl: en-US,  gl: US, ceid: "US:en"}
+      - {lang: en, hl: en-GB,  gl: GB, ceid: "GB:en"}
+      - {lang: en, hl: en-AU,  gl: AU, ceid: "AU:en"}
+      - {lang: en, hl: en-IN,  gl: IN, ceid: "IN:en"}
+      - {lang: en, hl: en-SG,  gl: SG, ceid: "SG:en"}
+      - {lang: en, hl: en-ZA,  gl: ZA, ceid: "ZA:en"}
+      - {lang: es, hl: es,     gl: ES, ceid: "ES:es"}
+      - {lang: es, hl: es-419, gl: MX, ceid: "MX:es-419"}
+      - {lang: fr, hl: fr,     gl: FR, ceid: "FR:fr"}
+      - {lang: pt, hl: pt-PT,  gl: PT, ceid: "PT:pt-150"}
+      - {lang: de, hl: de,     gl: DE, ceid: "DE:de"}
+      - {lang: nl, hl: nl,     gl: NL, ceid: "NL:nl"}
+      - {lang: nl, hl: nl,     gl: BE, ceid: "BE:nl"}
+      - {lang: ru, hl: ru,     gl: RU, ceid: "RU:ru"}
+      - {lang: ru, hl: ru,     gl: UA, ceid: "UA:ru"}
+      - {lang: tr, hl: tr,     gl: TR, ceid: "TR:tr"}
+      - {lang: ar, hl: ar,     gl: AE, ceid: "AE:ar"}
+      - {lang: ar, hl: ar,     gl: SA, ceid: "SA:ar"}
+      - {lang: zh, hl: zh-HK,  gl: HK, ceid: "HK:zh-Hant"}
+      - {lang: zh, hl: zh-TW,  gl: TW, ceid: "TW:zh-Hant"}
+    queries:
+      en:
+        - 'sanctioned tanker seized OR detained OR boarded'
+        - 'shadow fleet tanker detained OR boarded OR seized'
+        - 'sanctions evasion customs seized shipment'
+        - 'dual-use goods seized export ban'
+        - 'microchips OR "drone components" OR "electronic components" seized Russia export controls'
+        - 'OFAC OR "Justice Department" forfeiture OR seized tanker OR oil OR cargo sanctions'
+        - 'Iran oil sanctions seized cargo OR tanker OR vessel'
+        - 'North Korea sanctions seized shipment OR vessel OR coal'
+        - 'arms embargo weapons shipment seized OR intercepted vessel'
+        - 'Houthi weapons shipment seized OR interdicted'
+        - 'oligarch yacht OR jet OR assets seized sanctions'
+        - 'Russian sanctions customs seizure re-export OR transshipment'
+        - 'Venezuela OR Syria OR Libya sanctions seized cargo OR tanker'
+        - 'charcoal Somalia embargo seized'
+        - 'ship-to-ship transfer sanctioned oil tanker detained'
+        - 'false flag OR "fake flag" tanker detained sanctions'
+      es:
+        - 'petrolero sancionado OR "flota fantasma" retenido OR incautado'
+        - 'sanciones incautan OR decomisan embargo cargamento'
+        - 'bienes de doble uso incautados exportacion Rusia'
+      fr:
+        - 'petrolier "flotte fantome" arraisonne OR saisi OR immobilise sanctions'
+        - 'sanctions douane saisie biens double usage Russie'
+        - 'embargo armes saisie navire OR cargaison'
+      pt:
+        - 'petroleiro sancionado OR "frota sombra" apreendido OR retido'
+        - 'sancoes apreensao carga embargo'
+      de:
+        - 'Schattenflotte Tanker festgesetzt OR beschlagnahmt'
+        - 'Sanktionen Zoll beschlagnahmt Dual-Use Russland'
+        - 'Embargo Waffen Schiff beschlagnahmt'
+      nl:
+        - 'schaduwvloot tanker aangehouden OR in beslag genomen sancties'
+        - 'sancties douane inbeslagname Rusland export'
+      ru:
+        - 'санкции задержан танкер OR судно теневой флот'
+        - 'санкции таможня изъяли OR конфисковали товары двойного назначения'
+        - 'санкции арестовали яхту OR самолет OR активы'
+      tr:
+        - 'yaptirim tanker alikonuldu OR el konuldu golge filo'
+        - 'yaptirim gumruk el koydu ihracat Rusya'
+      ar:
+        - 'عقوبات ناقلة احتجاز OR ضبط OR مصادرة'
+        - 'حظر الأسلحة ضبط سفينة OR شحنة'
+      zh:
+        - '制裁 扣押 OR 查扣 油轮 OR 货轮'
+        - '制裁 海关 查获 两用 物项 出口管制'
+
+  gdelt:                       # global news index; free, no key. Set enabled: false to skip.
+    enabled: true
+    queries:
+      en:
+        - '(sanctioned OR "shadow fleet" OR embargo OR "export controls" OR "dual-use") (seized OR detained OR impounded OR forfeiture)'
+        - '(OFAC OR "sanctions evasion" OR "sanctioned tanker") (seized OR boarded OR intercepted)'
+      es:
+        - '(sanciones OR "flota fantasma" OR embargo) (incautado OR retenido OR decomisado)'
+      fr:
+        - '(sanctions OR "flotte fantome" OR embargo) (saisi OR arraisonne OR immobilise)'
+      de:
+        - '(Sanktionen OR Schattenflotte OR Embargo) (beschlagnahmt OR festgesetzt)'
+      ru:
+        - '(санкции OR "теневой флот" OR эмбарго) (задержан OR арестован OR конфискован OR изъяты)'
+      tr:
+        - '(yaptirim OR ambargo) (alikonuldu OR "el konuldu")'
+      ar:
+        - '(عقوبات OR حظر) (ضبط OR احتجاز OR مصادرة)'
+      zh:
+        - '(制裁 OR 禁运) (扣押 OR 查扣 OR 没收)'
+
+  official_sites:
+    enabled: true
+    query: 'site:{site} (seized OR seizure OR detained OR intercepted OR impounded OR forfeiture OR saisie OR saisi OR beschlagnahmt OR "in beslag") (sanctions OR sanctioned OR embargo OR "export control" OR "shadow fleet" OR OFAC OR dual-use OR sanctions)'
+    # `lang` is the language that site publishes in (it decides whether the headline is translated).
+    sites:
+      - {site: justice.gov,           lang: en}  # US Department of Justice (forfeiture, export-control and sanctions cases)
+      - {site: treasury.gov,          lang: en}  # US Treasury / OFAC
+      - {site: bis.gov,               lang: en}  # US Commerce Bureau of Industry and Security (export enforcement)
+      - {site: ice.gov,               lang: en}  # US Homeland Security Investigations
+      - {site: cbp.gov,               lang: en}  # US Customs and Border Protection
+      - {site: uscg.mil,              lang: en}  # US Coast Guard
+      - {site: gov.uk,                lang: en}  # UK OFSI, HMRC, Border Force, Royal Navy
+      - {site: consilium.europa.eu,   lang: en}  # EU Council (sanctions)
+      - {site: eeas.europa.eu,        lang: en}  # EU External Action (EUNAVFOR Irini, Aspides)
+      - {site: europol.europa.eu,     lang: en}  # Europol
+      - {site: un.org,                lang: en}  # United Nations (Panel of Experts, committees)
+      - {site: wcoomd.org,            lang: en}  # World Customs Organization
+      - {site: interpol.int,          lang: en}  # Interpol
+      - {site: customs.gov.sg,        lang: en}  # Singapore Customs
+      - {site: customs.gov.hk,        lang: en}  # Hong Kong Customs
+      - {site: douane.gouv.fr,        lang: fr}  # French customs
+      - {site: defense.gouv.fr,       lang: fr}  # French armed forces (Marine nationale boardings)
+      - {site: zoll.de,               lang: de}  # German customs
+      - {site: bmwk.de,               lang: de}  # German economy ministry (export control, BAFA)
+      - {site: fiod.nl,               lang: nl}  # Dutch fiscal investigation service
+      - {site: douane.nl,             lang: nl}  # Dutch customs
+      - {site: belastingdienst.nl,    lang: nl}  # Dutch Tax and Customs Administration
+      - {site: om.nl,                 lang: nl}  # Dutch Public Prosecution Service
+      - {site: agenciatributaria.es,  lang: es}  # Spanish tax and customs agency
+
+  # Extra RSS feeds. Each shows up in the run log as "RSS <name>: N items"; N = 0 means the address is wrong or blocked.
+  rss_feeds:
+    - {name: "UK Foreign Office sanctions news", url: "https://www.gov.uk/search/news-and-communications.atom?keywords=sanctions&organisations%5B%5D=foreign-commonwealth-development-office", lang: en, country: "United Kingdom"}
+    - {name: "UK Border Force", url: "https://www.gov.uk/search/news-and-communications.atom?organisations%5B%5D=border-force", lang: en, country: "United Kingdom"}
+    - {name: "Hong Kong government press releases (includes Customs)", url: "https://www.info.gov.hk/gia/rss/general_en.xml", lang: en, country: "Hong Kong"}
+
+# ---------------------------------------------------------------------
+#  EVASION SCORE  (see "How It Works" on the dashboard; defaults are in swatch/analyze.py)
+#  Override any number here. Each dimension is capped, so one big figure cannot decide the level alone.
+# ---------------------------------------------------------------------
+risk:
+  caps: {method: 30, network: 30, route: 20, scale: 20}
+  bands: {high: 50, medium: 25}          # score >= high AND two dimensions -> High; >= medium -> Medium; else Low
+
+analysis:
+  trend_window_days: 30            # "recent" vs "prior" window for corridor trends
+  min_history_days: 42             # below this, NEW-corridor and spike alerts stay quiet (not enough history)

@@ -1,0 +1,206 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Sanctions Seizure Watch - daily run.
+
+  python run_daily.py            # real run: search the web, extract, analyse, write docs/
+  python run_daily.py --demo     # offline demo with invented sample articles (separate database)
+  python run_daily.py --reanalyse   # skip searching; just rebuild the analysis/report from stored data
+"""
+import argparse
+import datetime as dt
+import os
+import sys
+import time
+
+import yaml
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+
+from swatch.lexicon import LANG_COUNTRY  # noqa: E402
+from swatch import db, collect, extract, analyze, report, translate, ner  # noqa: E402
+
+
+def log(*a):
+    print(*a, flush=True)
+
+
+START = time.monotonic()
+# The workflow gives the whole job 45 minutes. Stop extracting after this many minutes so analysis, the
+# board build and "Save results" still run; anything not reached is picked up again by the next run.
+INGEST_BUDGET_MIN = float(os.environ.get("INGEST_BUDGET_MIN", "28"))
+
+
+def ingest(conn, items, is_demo=False):
+    """Extract facts from each item and store. Returns (stored, relevant)."""
+    stored = relevant = 0
+    ner_hits = 0  # how many articles NER supplemented something the lexicon missed
+    now = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+    for n, it in enumerate(items):
+        if not is_demo and time.monotonic() - START > INGEST_BUDGET_MIN * 60:
+            log(f"      time budget reached after {n} of {len(items)} articles; the rest are left for the next run")
+            break
+        if n and n % 50 == 0:
+            conn.commit()  # keep progress even if the job is cut off
+        try:
+            rec = extract.extract(it["title"], it.get("text", ""), it.get("source_country") or LANG_COUNTRY.get(it.get("lang")))
+        except Exception as exc:  # one bad article must never stop the whole run
+            log(f"      skipped one article ({type(exc).__name__}: {exc}): {str(it.get('title'))[:80]}")
+            continue
+        rec.update({
+            "url": it["url"], "title": it["title"], "title_key": db.title_key(it["title"], it.get("source")),
+            "source": it.get("source"), "published": it.get("published"), "fetched": now,
+            "lang": it.get("lang"), "source_country": it.get("source_country"),
+            "text_mode": it.get("text_mode", "snippet"), "is_demo": int(is_demo),
+        })
+        if rec.get("relevant"):
+            # Translate now, while the article is relevant and about to be stored -
+            # irrelevant items are skipped to avoid wasting calls on noise.
+            rec["title_en"] = translate.to_english(rec["title"], rec.get("lang"))
+
+            # NER runs only on the English translation (one lightweight model
+            # for all 9 source languages) and only fills in what extract.py's
+            # rule-based pass left empty - it never overrules a lexicon match.
+            ents = ner.extract_entities(rec["title_en"])
+            # Organisations found by NER are mostly police forces and agencies, not shipping lines, so they are
+            # no longer stored as the shipping line (that polluted the repeat-link analysis).
+            if not rec.get("seizure_country") and not rec.get("origin") and not rec.get("destination"):
+                for cand in ents["places"]:
+                    ctry = ner.resolve_country(cand)
+                    if ctry:
+                        rec["seizure_country"], rec["location_conf"] = ctry, "low"
+                        break
+            unresolved = [p for p in ents["places"] if not ner.resolve_country(p)]
+            rec["ner_places"] = "; ".join(unresolved[:5]) or None
+            if rec.get("ner_places"):
+                ner_hits += 1
+        art_id = db.insert_article(conn, rec)
+        if art_id is None:
+            continue
+        stored += 1
+        if rec["relevant"]:
+            db.assign_event(conn, art_id)
+            relevant += 1
+    conn.commit()
+    if ner_hits:
+        log(f"      NER supplemented {ner_hits} article(s) (unrecognised place names logged to ner_places for review)")
+
+    return stored, relevant
+
+
+REREAD_SKIP = {"id", "url", "title", "title_key", "source", "published", "fetched", "lang", "is_demo", "event_id",
+               "title_en", "ner_places", "relevant"}
+
+
+def reread_snippets(conn, cfg, limit=60, days=3):
+    """Reports stored from a headline and snippet only (the full-text reader was not working) get one more try:
+    read the whole article now and fill in whatever the headline did not say (country, place, route, concealment...).
+    Only empty fields are filled; nothing found earlier is overwritten. Each report is retried once."""
+    cutoff = (dt.date.today() - dt.timedelta(days=days)).isoformat()
+    rows = conn.execute("SELECT id, url, title, source, lang, source_country FROM articles WHERE relevant=1 AND text_mode='snippet' "
+                        "AND COALESCE(published, fetched) >= ? ORDER BY COALESCE(published, fetched) DESC LIMIT ?", (cutoff, limit)).fetchall()
+    if not rows:
+        return 0, 0
+    items = [{"url": r[1], "title": r[2], "snippet": "", "id": r[0], "lang": r[4], "source_country": r[5]} for r in rows]
+    items = collect.fetch_all(items, cfg["run"]["resolve_google_links"])
+    cols = [c[1] for c in conn.execute("PRAGMA table_info(articles)")]
+    done = 0
+    for it in items:
+        if it.get("text_mode") != "full":
+            conn.execute("UPDATE articles SET text_mode='snippet-retried' WHERE id=?", (it["id"],))
+            continue
+        rec = extract.extract(it["title"], it["text"], it.get("source_country") or LANG_COUNTRY.get(it.get("lang")))
+        if not rec.get("relevant"):
+            conn.execute("UPDATE articles SET text_mode='full' WHERE id=?", (it["id"],))
+            continue
+        cur = dict(zip(cols, conn.execute("SELECT * FROM articles WHERE id=?", (it["id"],)).fetchone()))
+        sets = {k: v for k, v in rec.items() if k in cols and k not in REREAD_SKIP and v not in (None, "", 0)
+                and cur.get(k) in (None, "", 0, "Unknown")}
+        if rec.get("seizure_country") and cur.get("location_conf") == "low" and not cur.get("seizure_place"):
+            sets["location_conf"] = rec.get("location_conf")
+        sets["text_mode"] = "full"
+        conn.execute("UPDATE articles SET " + ", ".join(f"{k}=?" for k in sets) + " WHERE id=?", [*sets.values(), it["id"]])
+        done += 1
+    conn.commit()
+    return done, len(items)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--config", default=os.path.join(HERE, "config.yaml"))
+    ap.add_argument("--demo", action="store_true", help="use invented sample articles (offline)")
+    ap.add_argument("--reanalyse", action="store_true", help="skip collection, rebuild analysis from the database")
+    ap.add_argument("--days", type=int, help="override lookback days (e.g. 30 for a first back-fill)")
+    ap.add_argument("--out", default=os.path.join(HERE, "docs"))
+    args = ap.parse_args()
+
+    cfg = yaml.safe_load(open(args.config, encoding="utf-8"))
+    db_path = os.path.join(HERE, "data", "demo.db" if args.demo else "sanctions_watch.db")
+    if args.demo and os.path.exists(db_path):
+        os.remove(db_path)
+    conn = db.connect(db_path)
+    today = dt.date.today()
+
+    if args.demo:
+        items = __import__("swatch.demo", fromlist=["demo_articles"]).demo_articles(today)
+        log(f"Demo mode: {len(items)} invented articles")
+        stored, rel = ingest(conn, items, is_demo=True)
+        log(f"Stored {stored}; {rel} look like sanctions-related seizure reports")
+    elif not args.reanalyse:
+        days = args.days or cfg["run"]["lookback_days"]
+        log(f"[1/4] Searching the web (last {days} day(s))...")
+        items = collect.collect(cfg, days)
+        cutoff = (today - dt.timedelta(days=days + 1)).isoformat()
+        items = collect.prefilter(items, cutoff)
+        seen_urls, seen_titles = db.known_urls(conn), db.known_title_keys(conn, 30)
+        new = [i for i in items if i["url"] not in seen_urls and db.title_key(i["title"], i.get("source")) not in seen_titles]
+        new = new[: cfg["run"]["max_articles_per_run"]]
+        log(f"      {len(items)} candidate headlines, {len(new)} new")
+        log("[2/4] Reading articles...")
+        if cfg["run"]["fetch_full_text"]:
+            new = collect.fetch_all(new, cfg["run"]["resolve_google_links"])
+        else:
+            for i in new:
+                i["text"], i["text_mode"] = i.get("snippet", ""), "snippet"
+        log("[3/4] Extracting facts and storing...")
+        stored, rel = ingest(conn, new)
+        log(f"      stored {stored}, of which {rel} are sanctions-related seizure reports")
+
+    log("[4/4] Analysing and building report...")
+    site_langs = {e["site"]: e.get("lang", "en") for e in cfg["sources"].get("official_sites", {}).get("sites", [])
+                  if isinstance(e, dict)}
+    n_fx = db.fix_official_site_langs(conn, site_langs)
+    if n_fx:
+        log(f"      corrected language tag on {n_fx} older official-site headline(s)")
+    n_bf = db.backfill_title_en(conn, translate.to_english)
+    if n_bf:
+        log(f"      attempted {n_bf} older headline(s) that predate this feature "
+            f"({translate.stats['ok']} translated, {translate.stats['fail']} failed and kept as-is"
+            + (f"; last error: {translate.stats['last_error']}" if translate.stats["fail"] else "") + ")")
+    if not args.demo:
+        try:
+            got, tried = reread_snippets(conn, cfg)
+            if tried:
+                log(f"      re-read {got} of {tried} earlier headline-only report(s) in full")
+        except Exception as exc:  # an extra: never stop the run
+            log(f"      re-reading earlier reports skipped ({type(exc).__name__}: {exc})")
+    n_loc = db.backfill_locations(conn, extract.locate)
+    if n_loc:
+        log(f"      found a country for {n_loc} earlier report(s) that had none")
+    res = analyze.run(conn, cfg)
+    if res is None:
+        log("No sanctions-related seizure events stored yet - nothing to analyse. Try again after the first successful collection.")
+        out = report.write_empty(args.out, cfg, demo=args.demo)
+        return 0
+    db.save_alerts(conn, res["asof"].strftime("%Y-%m-%d"), res["alerts"])
+    out = report.write_all(res, args.out, cfg, demo=args.demo)
+    log(f"Done. {out['events']} events in report, {out['alerts']} alerts.")
+    log(f"Open: {os.path.join(args.out, 'index.html')}")
+    for a in res["alerts"][:8]:
+        log(f"  [{a['severity']:6}] {a['type']}: {a['title']}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

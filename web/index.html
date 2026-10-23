@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sanctions Seizure Watch</title>
+<style>
+.page[hidden]{display:none!important}
+/* Layout: Power BI style report like the CEN Seizure Risk Board. Grey frame, white navigation pane on the left, white canvas of rounded tiles on the right; stacks to one column on phones. One light look by design. */
+:root {
+  color-scheme: light;
+  --frame: #a7a1a1; --canvas: #ffffff; --tile: #ffffff; --tile-edge: #d9d4d4;
+  --ink: #252423; --muted: #605e5c; --kpi: #4d4a48; --navy: #1e3a5c; --navy-label: #203f66; --sky: #a9d3f1;
+  --col: #858b8b; --dot: #3c8ad8; --dot-edge: #1d5fa6; --land: #e6e6e6; --land-edge: #c9c9c9; --sea: #f2f2f2;
+  --nav-on: #1e3a5c; --th: #a6a6a6; --warn: #c0392b; --ok: #7fa68e; --amber: #e0a12a;
+  --font: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+body { background: var(--frame); color: var(--ink); font-family: var(--font); font-size: 14px; }
+.report { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 16px; padding-inline: 16px; padding-block: 16px; max-width: 1500px; margin: 0 auto; }
+.banner { grid-column: 1 / -1; background: #fff; border-radius: 14px; padding: 8px 16px; display: flex; justify-content: center; }
+.banner img { display: block; width: 100%; max-width: 1400px; height: auto; }
+.nav, .canvas { background: var(--canvas); border-radius: 14px; }
+.nav { padding: 10px 12px 14px; display: flex; flex-direction: column; gap: 14px; align-self: start; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+.nav h2 { margin: 0; text-align: center; font-size: .9rem; font-weight: 600; color: #3b1a33; }
+.nav-btn { font: 600 .9rem var(--font); color: var(--muted); background: var(--tile); border: 3px solid #d6d0d0; border-radius: 26px; min-height: 76px; padding: 10px; cursor: pointer; box-shadow: inset 0 0 0 1px #eee; }
+.nav-btn[aria-current="page"] { background: var(--nav-on); color: #fff; border-color: #4a6a8f; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+.nav-btn:hover:not([aria-current="page"]) { border-color: #b9b1b1; }
+.nav-btn:focus-visible, .btn:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--dot-edge); outline-offset: 2px; }
+.src { font-size: .72rem; color: var(--muted); line-height: 1.4; border-top: 1px solid var(--tile-edge); padding-top: 10px; }
+.btn { font: 600 .85rem var(--font); background: var(--navy); color: #fff; border: 0; border-radius: 8px; padding: 9px 10px; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--navy); border: 1px solid var(--tile-edge); }
+.canvas { padding: 12px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.slicers { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; padding: 8px 12px; border: 1px solid var(--tile-edge); border-radius: 12px; }
+.slicers label { display: grid; gap: 3px; font-size: .75rem; font-weight: 600; color: var(--muted); flex: 1 1 140px; min-width: 0; }
+.slicers label.grow { flex: 2 1 200px; }
+select, input[type="search"] { font: 400 .88rem var(--font); color: var(--ink); background: #fff; border: 1px solid #c8c6c4; border-radius: 4px; padding: 6px 8px; width: 100%; min-width: 0; }
+.page { display: grid; gap: 12px; grid-template-columns: repeat(12, minmax(0, 1fr)); }
+.tile { background: var(--tile); border: 1px solid var(--tile-edge); border-radius: 18px; box-shadow: 0 1px 2px rgba(0,0,0,.08), inset 0 -6px 10px -8px rgba(0,0,0,.18), inset 0 0 0 4px #f1efef; padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.tile h3 { margin: 0; text-align: center; font-size: 1.15rem; font-weight: 700; color: var(--ink); text-wrap: balance; }
+.tile .sub { text-align: center; font-size: .78rem; color: var(--muted); margin-top: -4px; }
+.span3 { grid-column: span 3; } .span4 { grid-column: span 4; } .span5 { grid-column: span 5; } .span6 { grid-column: span 6; } .span7 { grid-column: span 7; } .span8 { grid-column: span 8; } .span12 { grid-column: span 12; }
+.kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.kpis .tile { align-items: center; justify-content: center; gap: 2px; padding-block: 16px; }
+.kpis .wide { grid-column: span 2; }
+.kpi-v { font-size: 2.2rem; font-weight: 600; color: var(--kpi); font-variant-numeric: tabular-nums; line-height: 1.1; text-align: center; overflow-wrap: anywhere; }
+.kpi-k { font-size: 1.05rem; font-weight: 600; color: var(--navy-label); text-align: center; }
+.hbars { display: grid; gap: 6px; max-height: 300px; overflow-y: auto; padding-right: 4px; }
+.hbars.tall { max-height: 440px; } .hbars.fill { max-height: 560px; }
+.hb { display: grid; grid-template-columns: minmax(0, 40%) 1fr; gap: 8px; align-items: center; font-size: .82rem; }
+.hb .l { text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hb .t { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.hb .b { height: 16px; flex: none; background: var(--navy); }
+.sky .b { background: var(--sky); }
+.hb .n { font-size: .75rem; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.hb.click { cursor: pointer; } .hb.click:hover .l { text-decoration: underline; }
+.cols { display: flex; align-items: flex-end; gap: 1.5%; height: 210px; padding-top: 18px; overflow-x: auto; }
+.cols .c { flex: 1 0 22px; max-width: 70px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; min-width: 0; }
+.cols .bar { width: 100%; background: var(--col); min-height: 2px; }
+.cols .v { font-size: .7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cols .x { font-size: .68rem; color: var(--ink); white-space: nowrap; }
+.map { position: relative; width: 100%; aspect-ratio: 16 / 9; background: var(--sea); border-radius: 4px; overflow: hidden; touch-action: none; }
+.map svg { width: 100%; height: 100%; display: block; }
+.land { fill: var(--land); stroke: var(--land-edge); stroke-width: .6; }
+.dot { fill: var(--dot); stroke: var(--dot-edge); stroke-width: 1; cursor: pointer; fill-opacity: .8; }
+.dot.on { fill: var(--navy); stroke: #fff; }
+.route { fill: none; stroke-linecap: round; stroke: var(--navy); opacity: .5; cursor: pointer; }
+.route:hover { opacity: 1; }
+.map-lab { font-size: 9px; fill: #8a8886; letter-spacing: .08em; font-family: var(--font); pointer-events: none; }
+.zoom-btns { position: absolute; right: 8px; top: 8px; display: grid; gap: 4px; }
+.zoom-btns button { width: 32px; height: 32px; border-radius: 6px; border: 1px solid #c8c6c4; background: rgba(255,255,255,.95); color: var(--ink); font: 600 1.1rem var(--font); cursor: pointer; }
+.map-tip { position: absolute; pointer-events: none; background: rgba(255,255,255,.97); border: 1px solid #c8c6c4; border-radius: 6px; padding: 6px 9px; font-size: .78rem; line-height: 1.4; box-shadow: 0 2px 8px rgba(0,0,0,.18); max-width: 240px; z-index: 2; }
+.map-info { font-size: .8rem; color: var(--muted); min-height: 1.3em; overflow-wrap: anywhere; }
+.tbl { overflow: auto; max-height: 380px; border: 1px solid #8a8886; }
+.tbl.tall { max-height: 560px; }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; min-width: 560px; }
+th { background: var(--th); color: #201f1e; font-weight: 600; text-align: left; vertical-align: top; padding: 6px 8px; border: 1px solid #8a8886; position: sticky; top: 0; cursor: pointer; user-select: none; }
+th.r, td.r { text-align: right; }
+th .arr { font-size: .7rem; margin-left: 4px; }
+td { padding: 5px 8px; border: 1px solid #c8c6c4; font-variant-numeric: tabular-nums; vertical-align: top; }
+tbody tr:nth-child(even) td { background: #f7f7f7; }
+td.small { font-size: .78rem; color: var(--muted); }
+td a { color: var(--dot-edge); }
+.empty { color: var(--muted); font-size: .85rem; text-align: center; padding: 12px 0; }
+.note { font-size: .82rem; color: var(--muted); line-height: 1.5; margin: 0; }
+ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; display: grid; gap: 6px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .75rem; color: var(--muted); justify-content: center; }
+@media (max-width: 1100px) { .span3, .span4, .span5 { grid-column: span 6; } .span7, .span8 { grid-column: span 12; } }
+@media (max-width: 760px) {
+  .report { grid-template-columns: minmax(0, 1fr); }
+  .nav { position: static; flex-direction: row; flex-wrap: wrap; gap: 8px; }
+  .nav h2, .src { flex-basis: 100%; }
+  .nav-btn { min-height: 0; padding: 8px 12px; border-radius: 18px; border-width: 2px; flex: 1 1 auto; font-size: .82rem; }
+  .page > * { grid-column: span 12 !important; }
+  .kpi-v { font-size: 1.8rem; }
+}
+.badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: .72rem; font-weight: 700; color: #fff; }
+.badge.High { background: #c0392b; } .badge.Medium { background: #e0a12a; color: #3a2a00; } .badge.Low { background: #7fa68e; }
+.route.High { stroke: #c0392b; opacity: .65; } .route.Medium { stroke: #d08a0d; opacity: .6; } .route.Low { stroke: var(--navy); opacity: .45; }
+.route:hover { opacity: 1 !important; }
+.dot.High { fill: #c0392b; stroke: #7d1f15; } .dot.Medium { fill: #e0a12a; stroke: #9a6a05; } .dot.hub { fill: #ffffff; stroke: var(--navy); }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.tabs button { font: 600 .8rem var(--font); border: 1px solid #c8c6c4; background: #fff; border-radius: 16px; padding: 5px 12px; cursor: pointer; color: var(--muted); }
+.tabs button[aria-pressed="true"] { background: var(--navy); color: #fff; border-color: var(--navy); }
+.alert { border-left: 5px solid var(--amber); padding: 6px 10px; background: #fafafa; border-radius: 4px; font-size: .86rem; line-height: 1.45; }
+.alert.HIGH { border-left-color: var(--warn); }
+.alert b { display: block; }
+.warn { background: #fff8e6; border: 1px solid #ecd9a0; border-radius: 8px; padding: 8px 12px; font-size: .82rem; color: #5a4300; }
+.scorebar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: #eee; min-width: 120px; }
+.scorebar span { display: block; height: 100%; }
+.matrix td, .matrix th { text-align: center; } .matrix td:first-child, .matrix th:first-child { text-align: left; }
+.matrix td.hot { background: #cfe3f5; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="report">
+  <header class="banner"><img src="pccp-logo-banner.jpg" alt="United Nations Office on Drugs and Crime, AIRCOP and Container Control Programme, and World Customs Organization" width="2097" height="279"></header>
+  <nav class="nav" aria-label="Report pages">
+    <h2>Sanctions Seizure Watch</h2>
+    <button class="nav-btn" type="button" data-page="overview" aria-current="page">Overview</button>
+    <button class="nav-btn" type="button" data-page="routes">Maps &amp; Routes</button>
+    <button class="nav-btn" type="button" data-page="vessels">Vessels</button>
+    <button class="nav-btn" type="button" data-page="regimes">Regimes &amp; Goods</button>
+    <button class="nav-btn" type="button" data-page="evasion">Evasion Signs</button>
+    <button class="nav-btn" type="button" data-page="alerts">Alerts</button>
+    <button class="nav-btn" type="button" data-page="library">Report Library</button>
+    <button class="nav-btn" type="button" data-page="method">How It Works</button>
+    <div class="src" id="source-line">Loading data…</div>
+  </nav>
+
+  <main class="canvas">
+    <section class="slicers" aria-label="Slicers">
+      <label for="f-period">Period<select id="f-period"><option value="7">Last 7 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="0" selected>All dates</option></select></label>
+      <label for="f-regime">Sanctions regime<select id="f-regime"></select></label>
+      <label for="f-cat">What was seized<select id="f-cat"></select></label>
+      <label for="f-ctry">Seized in<select id="f-ctry"></select></label>
+      <label for="f-level">Evasion score<select id="f-level"><option value="">All</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select></label>
+      <label class="grow" for="f-q">Search<input type="search" id="f-q" placeholder="Headline, vessel, IMO, place, route, outlet…"></label>
+      <button class="btn ghost" id="f-reset" type="button">Clear slicers</button>
+    </section>
+    <div class="warn" id="demo-warn" hidden>This page shows invented demo data so you can test the layout. Run the daily workflow to replace it with real news reports.</div>
+
+    <section class="page" id="p-overview">
+      <div class="span4 kpis">
+        <div class="tile wide"><span class="kpi-v" id="k-reports">–</span><span class="kpi-k">Seizure reports (events)</span></div>
+        <div class="tile"><span class="kpi-v" id="k-countries">–</span><span class="kpi-k">Countries</span></div>
+        <div class="tile"><span class="kpi-v" id="k-high">–</span><span class="kpi-k">High evasion score</span></div>
+        <div class="tile"><span class="kpi-v" id="k-vessels">–</span><span class="kpi-k">Vessels seized</span></div>
+        <div class="tile"><span class="kpi-v" id="k-value">–</span><span class="kpi-k">Stated value, USD m</span></div>
+      </div>
+      <div class="tile span3"><h3>Reports per week</h3><div class="cols" id="o-weeks"></div></div>
+      <div class="tile span5"><h3>What was seized</h3><div class="hbars sky" id="o-cats"></div></div>
+      <div class="tile span8"><h3>Where goods and vessels were seized</h3><div class="sub">dot size = reports · red = a high-score event there · tap a dot to open it in the Report Library</div><div class="map" id="o-map"></div><div class="map-info" id="o-map-info"></div></div>
+      <div class="tile span4"><h3>Reports by country</h3><div class="hbars fill" id="o-countries"></div></div>
+      <div class="tile span12"><h3>Latest reports</h3><div class="tbl" id="o-latest"></div></div>
+    </section>
+
+    <section class="page" id="p-routes" hidden>
+      <div class="tile span12"><h3>Routes of sanctioned goods and vessels</h3>
+        <div class="sub">origin → transit → destination · line width = reports · red = High score · pinch or scroll to zoom</div>
+        <div class="tabs" role="group" aria-label="Map layers">
+          <button type="button" data-layer="routes" aria-pressed="true">Routes</button>
+          <button type="button" data-layer="places" aria-pressed="false">Ports &amp; places</button>
+          <button type="button" data-layer="hubs" aria-pressed="false">Transit hubs</button>
+        </div>
+        <div class="map" id="t-map" style="aspect-ratio:2/1"></div>
+        <div class="legend"><span><b style="color:#c0392b">━</b> High</span><span><b style="color:#d08a0d">━</b> Medium</span><span><b style="color:#1e3a5c">━</b> Low</span><span>Routes are drawn only where a report names an origin, a destination or both; the seizure place is used for the missing end.</span></div>
+        <div class="map-info" id="t-map-info"></div></div>
+      <div class="tile span6"><h3>Top routes</h3><div class="hbars tall" id="t-corr"></div></div>
+      <div class="tile span6"><h3>Transit and diversion hubs</h3><div class="sub">countries named between origin and destination</div><div class="hbars tall" id="t-transit"></div></div>
+      <div class="tile span6"><h3>Origin</h3><div class="hbars" id="t-orig"></div></div>
+      <div class="tile span6"><h3>Destination</h3><div class="hbars" id="t-dest"></div></div>
+      <div class="tile span12"><h3>Seizure hotspots</h3><div class="sub">ports, straits and ship-to-ship areas named most often</div><div class="tbl" id="t-hot"></div></div>
+    </section>
+
+    <section class="page" id="p-vessels" hidden>
+      <div class="span12 kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+        <div class="tile"><span class="kpi-v" id="v-n">–</span><span class="kpi-k">Vessels named</span></div>
+        <div class="tile"><span class="kpi-v" id="v-rep">–</span><span class="kpi-k">Seen in 2+ reports</span></div>
+        <div class="tile"><span class="kpi-v" id="v-imo">–</span><span class="kpi-k">With an IMO number</span></div>
+      </div>
+      <div class="tile span6"><h3>Flag states</h3><div class="sub">flag named in the report</div><div class="hbars" id="v-flags"></div></div>
+      <div class="tile span6"><h3>Cargo aboard</h3><div class="hbars sky" id="v-cargo"></div></div>
+      <div class="tile span12"><h3>Vessels and tankers</h3><div class="sub">repeat names and IMO numbers are the strongest leads · tap a header to sort</div><div class="tbl tall" id="v-table"></div></div>
+    </section>
+
+    <section class="page" id="p-regimes" hidden>
+      <div class="tile span6"><h3>Reports by sanctions regime</h3><div class="hbars tall" id="r-reg"></div></div>
+      <div class="tile span6"><h3>Imposed or enforced by</h3><div class="sub">authority named in the report</div><div class="hbars" id="r-auth"></div></div>
+      <div class="tile span6"><h3>What was seized</h3><div class="hbars sky tall" id="r-items"></div></div>
+      <div class="tile span6"><h3>Seized by</h3><div class="hbars" id="r-agency"></div><h3 style="margin-top:10px">Transport</h3><div class="hbars" id="r-trans"></div></div>
+      <div class="tile span12"><h3>Regime × category</h3><div class="sub">number of reports</div><div class="tbl" id="r-matrix"></div></div>
+    </section>
+
+    <section class="page" id="p-evasion" hidden>
+      <div class="tile span6"><h3>Evasion signs named in the reports</h3><div class="sub">share of reports in the slicers</div><div class="hbars tall" id="e-ind"></div></div>
+      <div class="tile span6"><h3>Evasion score bands</h3><div class="hbars" id="e-lv"></div><h3 style="margin-top:10px">Reports by route type</h3><div class="hbars sky" id="e-route"></div></div>
+      <div class="tile span12"><h3>Highest evasion scores</h3><div class="sub">score 0-100 · bars show method, network, route and scale · see How It Works</div><div class="tbl tall" id="e-table"></div></div>
+    </section>
+
+    <section class="page" id="p-alerts" hidden>
+      <div class="tile span12"><h3>Alerts</h3><div class="sub" id="a-sub"></div><div style="display:grid;gap:8px" id="a-list"></div></div>
+      <div class="tile span12"><h3>Corridor trends</h3><div class="sub">last 30 days against the 30 before · NEW = first seen within 60 days (needs ~6 weeks of history)</div><div class="tbl" id="a-cor"></div></div>
+    </section>
+
+    <section class="page" id="p-library" hidden>
+      <div class="tile span12"><h3>Report Library</h3><div class="sub">every event in the slicers above, newest first · tap a column header to sort · first 400 shown</div><div class="tbl tall" id="l-table"></div></div>
+    </section>
+
+    <section class="page" id="p-method" hidden>
+      <div class="tile span12"><h3>What this tool does</h3>
+        <ul class="inf">
+          <li>Every day it searches open-source news (Google News editions in many languages, GDELT, and the official customs, coast guard and ministry newsrooms listed in <code>config.yaml</code>) for reports where <b>goods, vessels or assets were seized and sanctions were involved</b>: UN, EU, US (OFAC), UK and other regimes, arms embargoes, export controls on dual-use goods, the shadow fleet, and sanctioned owners.</li>
+          <li>Facts are read by rules, with no AI service and no cost: what was seized, which regime, who seized it, vessel name and IMO number, flag, origin, transit, destination, quantity and stated value, and the sanctions-evasion signs the article names.</li>
+          <li>Only extracted facts and the article link are stored, not the article text. Open the link to check every item.</li>
+        </ul></div>
+      <div class="tile span12"><h3>How the evasion score is built</h3><div class="sub">0-100 · each dimension is capped so one large number cannot decide the level alone</div><div class="tbl" id="m-model"></div><p class="note" id="m-note"></p></div>
+      <div class="tile span12"><h3>Limits</h3>
+        <ul class="inf">
+          <li>News coverage favours large and unusual seizures and some countries and languages; the absence of a report is not the absence of seizures.</li>
+          <li>A sanctions cue in an article does not prove a seizure was made under that regime. The score is a pointer for a closer look, never a finding about a person, company or country.</li>
+          <li>Transit hubs are places where diverted goods are often reported. They are leads, not accusations against a state.</li>
+        </ul></div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script src="world.js"></script>
+<script src="data.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const SWD = window.SWD || { events: [], geo: { c: {}, p: {} }, indicators: {}, model: { dimensions: [], bands: {} }, alerts: [], corridors: [], vessels: [], hotspots: [] };
+  const E = SWD.events, GC = (SWD.geo || {}).c || {}, GP = (SWD.geo || {}).p || {}, IND = SWD.indicators || {};
+  const fmt = n => Number(n).toLocaleString("en-GB");
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const safe = u => /^https?:\/\//i.test(u || "") ? u : "#";
+  const pct = (a, b) => b ? Math.round(100 * a / b) : 0;
+  const split = v => v ? String(v).split("|").filter(Boolean) : [];
+  const cnt = (arr, f) => { const m = new Map(); for (const x of arr) { const k = f(x); if (k == null || k === "") continue; m.set(k, (m.get(k) || 0) + 1); } return [...m].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]))); };
+  const cntMany = (arr, f) => cnt(arr.flatMap(e => f(e) || []), x => x);
+  const LEVELRANK = { High: 3, Medium: 2, Low: 1 };
+  let page = "overview", layer = "routes";
+  const asof = new Date((SWD.asof || "2026-01-01") + "T00:00:00Z");
+  $("source-line").textContent = "Open-source news reports collected by Sanctions Seizure Watch. Data to " + (SWD.asof || "–") + " · built " + (SWD.generated || "–") + ". Facts are read automatically from news reports and can be wrong: verify through the link.";
+  if (SWD.demo) $("demo-warn").hidden = false;
+
+  /* ---------- slicers ---------- */
+  function fillSel(el, all, vals) { const cur = el.value; el.innerHTML = '<option value="">' + all + '</option>' + vals.map(v => '<option value="' + esc(v[0]) + '">' + esc(v[1]) + '</option>').join(""); if (vals.some(v => v[0] === cur)) el.value = cur; }
+  function setupSlicers() {
+    fillSel($("f-regime"), "All", cntMany(E, e => split(e.rg)).map(([c, n]) => [c, c + " (" + fmt(n) + ")"]));
+    fillSel($("f-cat"), "All", cnt(E, e => e.ca).map(([c, n]) => [c, c + " (" + fmt(n) + ")"]));
+    fillSel($("f-ctry"), "All", cnt(E, e => e.c).map(([c, n]) => [c, c + " (" + fmt(n) + ")"]));
+  }
+  function view() {
+    const per = +$("f-period").value, rg = $("f-regime").value, cat = $("f-cat").value, ct = $("f-ctry").value, lv = $("f-level").value, q = $("f-q").value.trim().toLowerCase();
+    const from = per ? new Date(asof.getTime() - (per - 1) * 864e5).toISOString().slice(0, 10) : "";
+    const toks = q.split(/\s+/).filter(Boolean);
+    return E.filter(e => (!from || e.d >= from) && (!rg || split(e.rg).includes(rg)) && (!cat || e.ca === cat) && (!ct || e.c === ct) && (!lv || e.lv === lv) &&
+      (!toks.length || toks.every(t => [e.ti, e.it, e.cg, e.c, e.p, e.o, e.op, e.de, e.dp, e.t, e.ve, e.imo, e.fl, e.rg, e.ou].some(v => v && String(v).toLowerCase().includes(t)))));
+  }
+
+  /* ---------- parts ---------- */
+  function hbars(el, entries, opts = {}) {
+    if (!entries.length) { el.innerHTML = '<div class="empty">No data for these slicers.</div>'; return; }
+    const max = Math.max(...entries.map(e => e[1]));
+    el.innerHTML = entries.map(([l, n]) => '<div class="hb' + (opts.click ? " click" : "") + '" data-l="' + esc(l) + '"><span class="l" title="' + esc(l) + '">' + esc(l) + '</span><span class="t"><span class="b" style="width:' + (78 * n / max).toFixed(2) + '%"></span><span class="n">' + (opts.fmt ? opts.fmt(n) : fmt(n)) + '</span></span></div>').join("");
+    if (opts.click) el.querySelectorAll(".hb").forEach(r => r.addEventListener("click", () => opts.click(r.dataset.l)));
+  }
+  function weekStart(d) { const t = new Date(d + "T00:00:00Z"), dow = (t.getUTCDay() + 6) % 7; return new Date(t.getTime() - dow * 864e5).toISOString().slice(0, 10); }
+  function weekCols(el, rows) {
+    const m = new Map(); rows.forEach(e => { const k = weekStart(e.d); m.set(k, (m.get(k) || 0) + 1); });
+    const ks = [...m.keys()].sort().slice(-26); if (!ks.length) { el.innerHTML = '<div class="empty">No dated reports.</div>'; return; }
+    const max = Math.max(...ks.map(k => m.get(k)));
+    el.innerHTML = ks.map(k => '<div class="c" title="Week from ' + k + '"><span class="v">' + fmt(m.get(k)) + '</span><span class="bar" style="height:' + (78 * m.get(k) / max).toFixed(1) + '%"></span><span class="x">' + k.slice(5) + '</span></div>').join("");
+  }
+  const sorts = {};
+  function table(el, id, cols, rows, def, limit) {
+    const st = sorts[id] || (sorts[id] = { k: def[0], dir: def[1] });
+    const sorted = rows.slice().sort((a, b) => { const x = a[st.k], y = b[st.k]; const r = typeof x === "number" && typeof y === "number" ? x - y : String(x == null ? "" : x).localeCompare(String(y == null ? "" : y)); return st.dir * r; }).slice(0, limit || 1e9);
+    el.innerHTML = rows.length ? '<table><thead><tr>' + cols.map(c => '<th class="' + (c.r ? "r" : "") + '" data-k="' + c.k + '" scope="col">' + c.label + (st.k === c.k ? '<span class="arr">' + (st.dir < 0 ? "▼" : "▲") + '</span>' : "") + '</th>').join("") + '</tr></thead><tbody>' +
+      sorted.map(r => '<tr>' + cols.map(c => '<td class="' + (c.r ? "r " : "") + (c.cls || "") + '">' + (c.f ? c.f(r) : esc(r[c.k] == null ? "–" : r[c.k])) + '</td>').join("") + '</tr>').join("") + '</tbody></table>' : '<div class="empty">No data for these slicers.</div>';
+    el.querySelectorAll("th").forEach(th => th.addEventListener("click", () => { const k = th.dataset.k; sorts[id] = { k, dir: st.k === k ? -st.dir : -1 }; render(); }));
+  }
+  const qtyText = e => [e.bb ? fmt(Math.round(e.bb)) + " barrels" : "", e.kg ? (e.kg >= 1000 ? fmt(+(e.kg / 1000).toFixed(1)) + " t" : fmt(Math.round(e.kg)) + " kg") : "", e.u ? fmt(Math.round(e.u)) + " " + (e.ut || "units") : "", e.v ? "~$" + (e.v >= 1e6 ? fmt(+(e.v / 1e6).toFixed(1)) + "m" : fmt(Math.round(e.v))) : ""].filter(Boolean).join(", ");
+  const badge = lv => '<span class="badge ' + esc(lv) + '">' + esc(lv) + '</span>';
+  const link = r => '<a href="' + esc(safe(r.ur)) + '" target="_blank" rel="noopener noreferrer">' + esc(r.ti || "open") + '</a>' + (r.ou ? ' <span class="small">(' + esc(r.ou) + (r.n > 1 ? ", " + r.n + " reports" : "") + ')</span>' : "");
+  const decorate = rows => rows.map(e => Object.assign({}, e, {
+    place: (e.p && GP[e.p] && !GP[e.p][2]) ? e.p + " (at sea" + (e.c ? ", seized by " + e.c : "") + ")" : [e.p, e.c].filter(Boolean).join(", "), route: [e.o, split(e.t).join(", "), e.de].filter(Boolean).join(" → "), q: qtyText(e),
+    regime: split(e.rg).map(x => x.split(/ [\/(]/)[0]).join(", "), ship: [e.ve, e.imo ? "IMO " + e.imo : "", e.fl ? "flag " + e.fl : ""].filter(Boolean).join(" · ")
+  }));
+  const repCols = [
+    { k: "d", label: "Date" }, { k: "it", label: "Seized" }, { k: "regime", label: "Regime", cls: "small" }, { k: "place", label: "Seized in" }, { k: "route", label: "Route", cls: "small" },
+    { k: "ship", label: "Vessel", cls: "small" }, { k: "q", label: "Quantity", cls: "small" }, { k: "sc", label: "Score", r: true, f: r => badge(r.lv) + " " + r.sc }, { k: "ti", label: "Report", f: link },
+  ];
+
+  /* ---------- maps ---------- */
+  const maps = {};
+  function makeMap(id, tall) {
+    const box = $(id), W = 960, H = tall ? 480 : 540;
+    const proj = d3.geoMercator().scale(W / (2 * Math.PI) * (tall ? 1 : .98)).center([30, tall ? 22 : 24]).translate([W / 2, H / 2]);
+    const path = d3.geoPath(proj);
+    const svg = d3.select(box).append("svg").attr("viewBox", "0 0 " + W + " " + H).attr("role", "img").attr("aria-label", "World map");
+    const g = svg.append("g");
+    if (window.CEN_WORLD && window.topojson) g.append("path").attr("class", "land").attr("d", path(topojson.feature(CEN_WORLD.land, CEN_WORLD.land.objects.land)));
+    const layerG = g.append("g");
+    const tip = document.createElement("div"); tip.className = "map-tip"; tip.hidden = true;
+    const zb = document.createElement("div"); zb.className = "zoom-btns";
+    zb.innerHTML = '<button type="button" data-z="in" aria-label="Zoom in">+</button><button type="button" data-z="out" aria-label="Zoom out">−</button><button type="button" data-z="reset" aria-label="Reset view">⟲</button>';
+    box.append(zb, tip);
+    const M = { proj, svg, layer: layerG, tip, k: 1, W, H, box };
+    M.zoom = d3.zoom().scaleExtent([1, 12]).translateExtent([[0, 0], [W, H]]).on("zoom", e => { g.attr("transform", e.transform); M.k = e.transform.k; scale(M); tip.hidden = true; });
+    svg.call(M.zoom).on("dblclick.zoom", null);
+    zb.addEventListener("click", e => { const z = e.target.closest("button"); if (!z) return; if (z.dataset.z === "in") svg.call(M.zoom.scaleBy, 1.6); else if (z.dataset.z === "out") svg.call(M.zoom.scaleBy, 1 / 1.6); else svg.transition().duration(300).call(M.zoom.transform, d3.zoomIdentity); });
+    maps[id] = M; return M;
+  }
+  function scale(M) {
+    M.layer.selectAll("circle").attr("r", function () { return this.__r / Math.sqrt(M.k); }).attr("stroke-width", 1 / Math.sqrt(M.k));
+    M.layer.selectAll("path.route").attr("stroke-width", function () { return this.__w / Math.sqrt(M.k); });
+    M.layer.selectAll("text.lab").attr("font-size", 9 / Math.sqrt(M.k));
+  }
+  function showTip(M, ev, html) { const r = M.box.getBoundingClientRect(); M.tip.innerHTML = html; M.tip.hidden = false; M.tip.style.left = Math.min(ev.clientX - r.left + 12, r.width - 230) + "px"; M.tip.style.top = Math.max(4, ev.clientY - r.top + 12) + "px"; }
+  const pt = (c, p) => (p && GP[p]) ? [GP[p][0], GP[p][1]] : (c && GC[c]) ? GC[c] : null;
+  const xy = (M, p) => p ? M.proj([p[1], p[0]]) : null;
+  const worst = list => list.reduce((w, e) => LEVELRANK[e.lv] > LEVELRANK[w] ? e.lv : w, "Low");
+
+  function drawOverviewMap(rows) {
+    const M = maps["o-map"]; M.layer.selectAll("*").remove();
+    const g = new Map();
+    rows.forEach(e => { const p = pt(e.c, e.p); if (!p) return; const k = e.p && GP[e.p] ? e.p : e.c; const o = g.get(k) || { name: k, p, list: [] }; o.list.push(e); g.set(k, o); });
+    const arr = [...g.values()].sort((a, b) => a.list.length - b.list.length);
+    if (!arr.length) { $("o-map-info").textContent = "No located reports for these slicers."; return; }
+    const max = Math.max(...arr.map(o => o.list.length));
+    arr.forEach(o => {
+      const q = xy(M, o.p), lv = worst(o.list);
+      const el = M.layer.append("circle").attr("class", "dot " + (lv === "Low" ? "" : lv)).attr("cx", q[0]).attr("cy", q[1]).node(); el.__r = 3.5 + 13 * Math.sqrt(o.list.length / max);
+      d3.select(el).on("mousemove", ev => showTip(M, ev, "<b>" + esc(o.name) + "</b><br>" + fmt(o.list.length) + " reports<br>" + esc(cnt(o.list, e => e.it).slice(0, 3).map(x => x[0] + " " + x[1]).join(", ")))).on("mouseleave", () => M.tip.hidden = true)
+        .on("click", () => { $("f-q").value = o.name; show("library"); });
+    });
+    scale(M); $("o-map-info").textContent = fmt(arr.length) + " locations with located reports.";
+  }
+  function nodesOf(e) {
+    const A = e.o ? { n: e.op || e.o, p: pt(e.o, e.op) } : null, D = e.de ? { n: e.dp || e.de, p: pt(e.de, e.dp) } : null, Z = ((e.c && e.lc !== "actor") || e.p) ? { n: e.p || e.c, p: pt(e.c, e.p) } : null;
+    const tr = split(e.t).filter(c => GC[c]).map(c => ({ n: c, p: GC[c], hub: 1 }));
+    let a = A, d = D;
+    if (a && !d) d = Z; else if (d && !a) a = Z;
+    if (!a || !d || !a.p || !d.p) return null;
+    const nodes = [a, ...tr, d].filter(x => x.p);
+    const out = nodes.filter((x, i) => i === 0 || x.n !== nodes[i - 1].n);
+    return out.length >= 2 ? out : null;
+  }
+  function arc(M, p, q, bend) { const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2 - Math.hypot(q[0] - p[0], q[1] - p[1]) * bend; return "M" + p + "Q" + [mx, my] + " " + q; }
+  function drawRouteMap(rows) {
+    const M = maps["t-map"]; M.layer.selectAll("*").remove();
+    if (layer === "routes") {
+      const rm = new Map();
+      rows.forEach(e => { const nd = nodesOf(e); if (!nd) return; const k = nd.map(x => x.n).join(" → "); const o = rm.get(k) || { k, nd, list: [] }; o.list.push(e); rm.set(k, o); });
+      const list = [...rm.values()].sort((a, b) => b.list.length - a.list.length).slice(0, 150);
+      if (!list.length) { $("t-map-info").textContent = "No reports with a usable route for these slicers."; return; }
+      const max = list[0].list.length, ends = new Map();
+      list.slice().reverse().forEach(o => {
+        const lv = worst(o.list);
+        for (let i = 0; i < o.nd.length - 1; i++) {
+          const p = xy(M, o.nd[i].p), q = xy(M, o.nd[i + 1].p);
+          const el = M.layer.append("path").attr("class", "route " + lv).attr("d", arc(M, p, q, .16)).node(); el.__w = 1 + 5 * o.list.length / max;
+          d3.select(el).on("mousemove", ev => showTip(M, ev, "<b>" + esc(o.k) + "</b><br>" + fmt(o.list.length) + " reports · " + esc(lv) + "<br>" + esc(cnt(o.list, e => e.it).slice(0, 2).map(x => x[0]).join(", ")))).on("mouseleave", () => M.tip.hidden = true)
+            .on("click", () => { $("f-q").value = o.nd[0].n; show("library"); });
+        }
+        o.nd.forEach((x, i) => { if (!ends.has(x.n)) ends.set(x.n, { p: x.p, hub: x.hub }); });
+      });
+      ends.forEach((v, name) => { const q = xy(M, v.p), el = M.layer.append("circle").attr("class", "dot" + (v.hub ? " hub" : "")).attr("cx", q[0]).attr("cy", q[1]).node(); el.__r = 3.2; d3.select(el).on("mousemove", ev => showTip(M, ev, "<b>" + esc(name) + "</b>")).on("mouseleave", () => M.tip.hidden = true); });
+      scale(M); $("t-map-info").textContent = fmt(list.length) + " routes drawn (the busiest 150).";
+    } else {
+      const g = new Map();
+      rows.forEach(e => {
+        const add = (c, p, role) => { const pp = pt(c, p); if (!pp) return; const k = p && GP[p] ? p : c; const o = g.get(k) || { name: k, p: pp, n: 0, roles: new Set(), list: [] }; o.n++; o.roles.add(role); o.list.push(e); g.set(k, o); };
+        if (layer === "places") { add(e.c, e.p, "seized"); add(e.o, e.op, "origin"); add(e.de, e.dp, "destination"); }
+        else split(e.t).forEach(c => add(c, null, "transit"));
+      });
+      const arr = [...g.values()].sort((a, b) => a.n - b.n);
+      if (!arr.length) { $("t-map-info").textContent = layer === "hubs" ? "No transit countries named for these slicers." : "No located places for these slicers."; return; }
+      const max = Math.max(...arr.map(o => o.n));
+      arr.forEach(o => {
+        const q = xy(M, o.p), lv = worst(o.list);
+        const el = M.layer.append("circle").attr("class", "dot " + (lv === "Low" ? "" : lv)).attr("cx", q[0]).attr("cy", q[1]).node(); el.__r = 3 + 12 * Math.sqrt(o.n / max);
+        d3.select(el).on("mousemove", ev => showTip(M, ev, "<b>" + esc(o.name) + "</b><br>" + fmt(o.n) + " mentions<br>" + esc([...o.roles].join(", ")))).on("mouseleave", () => M.tip.hidden = true)
+          .on("click", () => { $("f-q").value = o.name; show("library"); });
+        if (o.n >= Math.max(2, max * .4)) M.layer.append("text").attr("class", "lab map-lab").attr("x", q[0] + 6).attr("y", q[1] - 6).text(o.name);
+      });
+      scale(M); $("t-map-info").textContent = fmt(arr.length) + (layer === "hubs" ? " transit countries." : " ports and places named.");
+    }
+  }
+
+  /* ---------- render ---------- */
+  const routeKey = e => { const loc = e.lc === "actor" ? null : e.c; return e.o && e.de && e.o !== e.de ? e.o + " → " + e.de : (e.o && loc && e.o !== loc && !e.de) ? e.o + " → " + loc : (e.de && loc && e.de !== loc && !e.o) ? loc + " → " + e.de : null; };
+  function render() {
+    const v = view(), p = page;
+    if (p === "overview") {
+      const vessels = new Set(v.filter(e => e.ve || e.imo).map(e => e.imo || e.ve));
+      $("k-reports").textContent = fmt(v.length); $("k-countries").textContent = fmt(new Set(v.map(e => e.c).filter(Boolean)).size);
+      $("k-high").textContent = fmt(v.filter(e => e.lv === "High").length); $("k-vessels").textContent = fmt(vessels.size);
+      $("k-value").textContent = fmt(Math.round(v.reduce((s, e) => s + (e.v || 0), 0) / 1e6));
+      weekCols($("o-weeks"), v); hbars($("o-cats"), cnt(v, e => e.ca));
+      hbars($("o-countries"), cnt(v, e => e.c).slice(0, 60), { click: c => { $("f-ctry").value = c; render(); } });
+      table($("o-latest"), "ol", repCols, decorate(v.slice().sort((a, b) => b.d.localeCompare(a.d)).slice(0, 12)), ["d", -1]); drawOverviewMap(v);
+    } else if (p === "routes") {
+      drawRouteMap(v);
+      hbars($("t-corr"), cnt(v, routeKey).slice(0, 30));
+      hbars($("t-transit"), cntMany(v, e => split(e.t)).slice(0, 30));
+      hbars($("t-orig"), cnt(v, e => e.o).slice(0, 20)); hbars($("t-dest"), cnt(v, e => e.de).slice(0, 20));
+      const hot = new Map(); v.forEach(e => { const k = e.p || e.c; if (!k) return; const o = hot.get(k) || { place: k, country: e.c, n: 0, high: 0, items: [] }; o.n++; if (e.lv === "High") o.high++; o.items.push(e.it); hot.set(k, o); });
+      table($("t-hot"), "th", [{ k: "place", label: "Place" }, { k: "country", label: "Country" }, { k: "n", label: "Reports", r: true, f: r => fmt(r.n) }, { k: "high", label: "High score", r: true, f: r => fmt(r.high) }, { k: "it", label: "Main items", cls: "small", f: r => esc(cnt(r.items, x => x).slice(0, 2).map(x => x[0]).join("; ")) }], [...hot.values()], ["n", -1], 40);
+    } else if (p === "vessels") {
+      const vv = new Map(); v.filter(e => e.ve || e.imo).forEach(e => { const k = e.imo ? "IMO " + e.imo : e.ve; const o = vv.get(k) || { id: k, name: e.ve, imo: e.imo, flag: e.fl, n: 0, first: e.d, last: e.d, places: new Set(), cargo: new Set(), reg: new Set(), url: e.ur, title: e.ti, lv: e.lv }; o.n++; if (e.d < o.first) o.first = e.d; if (e.d > o.last) o.last = e.d; if (e.p || e.c) o.places.add(e.p || e.c); if (e.cg) o.cargo.add(e.cg); split(e.rg).forEach(r => o.reg.add(r.split(/ [\/(]/)[0])); if (!o.flag && e.fl) o.flag = e.fl; if (!o.name && e.ve) o.name = e.ve; if (LEVELRANK[e.lv] > LEVELRANK[o.lv]) o.lv = e.lv; vv.set(k, o); });
+      const arr = [...vv.values()].map(o => Object.assign(o, { placesT: [...o.places].join("; "), cargoT: [...o.cargo].join("; "), regT: [...o.reg].join("; ") }));
+      $("v-n").textContent = fmt(arr.length); $("v-rep").textContent = fmt(arr.filter(o => o.n >= 2).length); $("v-imo").textContent = fmt(arr.filter(o => o.imo).length);
+      hbars($("v-flags"), cnt(v.filter(e => e.ve || e.imo), e => e.fl).slice(0, 20)); hbars($("v-cargo"), cnt(v.filter(e => e.ve || e.imo), e => e.cg).slice(0, 15));
+      table($("v-table"), "vt", [{ k: "name", label: "Vessel", f: r => esc(r.name || "–") }, { k: "imo", label: "IMO" }, { k: "flag", label: "Flag" }, { k: "n", label: "Reports", r: true, f: r => (r.n >= 2 ? "<b>" + r.n + "</b>" : r.n) }, { k: "first", label: "First seen" }, { k: "last", label: "Last seen" }, { k: "placesT", label: "Where", cls: "small" }, { k: "cargoT", label: "Cargo", cls: "small" }, { k: "regT", label: "Regime", cls: "small" }, { k: "title", label: "Latest report", f: r => '<a href="' + esc(safe(r.url)) + '" target="_blank" rel="noopener noreferrer">' + esc(r.title || "open") + '</a>' }], arr, ["n", -1], 300);
+    } else if (p === "regimes") {
+      hbars($("r-reg"), cntMany(v, e => split(e.rg)).slice(0, 25)); hbars($("r-auth"), cntMany(v, e => split(e.au)));
+      hbars($("r-items"), cnt(v, e => e.it).slice(0, 30)); hbars($("r-agency"), cnt(v, e => e.ag)); hbars($("r-trans"), cnt(v, e => e.tr));
+      const cats = cnt(v, e => e.ca).map(x => x[0]), regs = cntMany(v, e => split(e.rg)).map(x => x[0]);
+      const mat = regs.map(r => { const row = { reg: r }; cats.forEach(c => row[c] = v.filter(e => split(e.rg).includes(r) && e.ca === c).length); row.total = v.filter(e => split(e.rg).includes(r)).length; return row; });
+      table($("r-matrix"), "rm", [{ k: "reg", label: "Regime" }, ...cats.map(c => ({ k: c, label: c, r: true, f: r => r[c] ? '<span class="hotc">' + fmt(r[c]) + '</span>' : "–" })), { k: "total", label: "Total", r: true, f: r => fmt(r.total) }], mat, ["total", -1]);
+    } else if (p === "evasion") {
+      const n = v.length;
+      hbars($("e-ind"), cntMany(v, e => split(e.in)).map(([k, c]) => [(IND[k] || k) + " (" + pct(c, n) + "%)", c]));
+      hbars($("e-lv"), cnt(v, e => e.lv).sort((a, b) => LEVELRANK[b[0]] - LEVELRANK[a[0]]));
+      hbars($("e-route"), cnt(v, e => split(e.t).length ? "Via a stated transit country" : (e.o && e.de) ? "Origin and destination named" : (e.o || e.de) ? "One end named" : "No route named"));
+      const top = decorate(v.filter(e => e.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, 60));
+      table($("e-table"), "et", [{ k: "sc", label: "Score", r: true, f: r => badge(r.lv) + " " + r.sc }, { k: "d", label: "Date" }, { k: "it", label: "Seized" }, { k: "place", label: "Seized in" }, { k: "route", label: "Route", cls: "small" }, { k: "why", label: "Why", cls: "small", f: r => esc((r.rs || []).join("; ")) }, { k: "ti", label: "Report", f: link }], top, ["sc", -1], 60);
+    } else if (p === "alerts") {
+      const al = SWD.alerts || [];
+      $("a-sub").textContent = al.length ? al.length + " alerts from the latest run" : "No alerts yet. Trend alerts stay quiet until about 42 days of history exist; high-score events and repeat vessels show as soon as they are found.";
+      $("a-list").innerHTML = al.map(a => '<div class="alert ' + esc(a.severity) + '"><b>' + esc(a.type) + ': ' + esc(a.title) + '</b>' + esc(a.detail || "") + (a.urls && a.urls[0] ? ' <a href="' + esc(safe(a.urls[0])) + '" target="_blank" rel="noopener noreferrer">link</a>' : "") + '</div>').join("");
+      table($("a-cor"), "ac", [{ k: "origin", label: "From" }, { k: "destination", label: "To" }, { k: "events", label: "Reports", r: true, f: r => fmt(r.events) }, { k: "recent", label: "Last 30 d", r: true }, { k: "prior", label: "Prior 30 d", r: true }, { k: "trend", label: "Trend" }, { k: "transit", label: "Via", cls: "small" }, { k: "main_items", label: "Main items", cls: "small" }, { k: "last_seen", label: "Last seen" }], SWD.corridors || [], ["events", -1], 40);
+    } else if (p === "library") table($("l-table"), "lib", repCols, decorate(v), ["d", -1], 400);
+    else if (p === "method") {
+      const M = SWD.model || { dimensions: [], bands: {} };
+      table($("m-model"), "mm", [{ k: "name", label: "Dimension" }, { k: "cap", label: "Max points", r: true }, { k: "text", label: "What counts", cls: "small" }], M.dimensions || [], ["cap", -1]);
+      $("m-note").textContent = "High = " + (M.bands || {}).high + " points or more and at least two dimensions; Medium = " + (M.bands || {}).medium + " or more. " + (M.note || "");
+    }
+  }
+  function show(name) {
+    page = name;
+    document.querySelectorAll(".nav-btn").forEach(b => { if (b.dataset.page === name) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+    document.querySelectorAll(".page").forEach(s => s.hidden = s.id !== "p-" + name);
+    render(); window.scrollTo({ top: 0 });
+  }
+  /* ---------- start ---------- */
+  setupSlicers();
+  if (window.d3) { makeMap("o-map", false); makeMap("t-map", true); }
+  ["f-period", "f-regime", "f-cat", "f-ctry", "f-level"].forEach(i => $(i).addEventListener("change", render));
+  $("f-q").addEventListener("input", () => { clearTimeout(window.__t); window.__t = setTimeout(render, 200); });
+  $("f-reset").addEventListener("click", () => { $("f-period").value = "0"; ["f-regime", "f-cat", "f-ctry", "f-level"].forEach(i => $(i).value = ""); $("f-q").value = ""; render(); });
+  document.querySelectorAll(".nav-btn").forEach(b => b.addEventListener("click", () => show(b.dataset.page)));
+  document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => { layer = b.dataset.layer; document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false")); render(); }));
+  render();
+})();
+</script>
+</body>
+</html>
