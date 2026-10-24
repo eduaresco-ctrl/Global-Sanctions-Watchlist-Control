@@ -219,7 +219,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     <section class="page" id="p-evasion" hidden>
       <div class="tile span6"><h3>Evasion signs named in the reports</h3><div class="sub">share of reports in the slicers · tap a bar to read those reports</div><div class="hbars tall" id="e-ind"></div></div>
       <div class="tile span6"><h3>Evasion score bands</h3><div class="hbars" id="e-lv"></div><h3 style="margin-top:10px">Reports by route type</h3><div class="hbars sky" id="e-route"></div></div>
-      <div class="tile span12" id="e-sel-tile" hidden><h3 id="e-sel-h"></h3><div class="sub">every report behind the bar you tapped · tap a headline to open the article · <a href="#" id="e-sel-clear">clear selection</a></div><div class="tbl tall" id="e-sel"></div></div>
+      <div class="tile span12" id="e-sel-tile" hidden><h3 id="e-sel-h"></h3><div class="sub">every report behind the bar you tapped · tap a headline to open the article · <a href="#" id="e-sel-clear">clear selection</a></div><div id="e-parties" hidden></div><div class="tbl tall" id="e-sel"></div></div>
       <div class="tile span12"><h3>Highest evasion scores</h3><div class="sub">score 0-100 · bars show method, network, route and scale · see How It Works</div><div class="tbl tall" id="e-table"></div></div>
     </section>
 
@@ -326,6 +326,17 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     if (opts.click) el.querySelectorAll(".hb").forEach(r => r.addEventListener("click", () => opts.click(r.dataset.l)));
   }
   function weekStart(d) { const t = new Date(d + "T00:00:00Z"), dow = (t.getUTCDay() + 6) % 7; return new Date(t.getTime() - dow * 864e5).toISOString().slice(0, 10); }
+  /* names on official sanctions lists (OFAC, UN, EU) that appear in the reports behind the "sanctioned party" bar */
+  function showParties(rows) {
+    const box = $("e-parties"); if (!rows) { box.hidden = true; box.innerHTML = ""; return; }
+    const m = new Map();
+    rows.forEach(e => (e.sl || []).forEach(x => { const k = x.n.toLowerCase(); const o = m.get(k) || { n: x.n, t: x.t, l: x.l, p: x.p, c: 0, last: "", ti: "", ur: "" }; o.c++; if (e.d > o.last) { o.last = e.d; o.ti = e.ti; o.ur = e.ur; } m.set(k, o); }));
+    const list = [...m.values()];
+    box.hidden = false;
+    box.innerHTML = '<h3 style="margin:10px 0 2px">People, companies and vessels on official sanctions lists (' + list.length + ')</h3><div class="sub">names found in these reports that are written on the US OFAC, UN or EU lists · matched by name, so check the official list before relying on a match</div><div class="tbl" id="e-parties-t"></div>';
+    if (!list.length) { $("e-parties-t").innerHTML = '<div class="empty">No listed names found yet. The lists are downloaded and matched at every daily run (10:00 Brussels time); names appear here after the next run.</div>'; return; }
+    table($("e-parties-t"), "epart", [{ k: "n", label: "Name" }, { k: "t", label: "Type" }, { k: "l", label: "Listed by" }, { k: "p", label: "Programme", cls: "small" }, { k: "c", label: "Reports", r: true }, { k: "last", label: "Latest" }, { k: "ti", label: "Latest report", f: r => r.ur ? '<a href="' + esc(safe(r.ur)) + '" target="_blank" rel="noopener noreferrer">' + esc(r.ti || "open") + '</a>' : esc(r.ti || "") }], list, ["c", -1]);
+  }
   function weekCols(el, rows) {
     const m = new Map(); rows.forEach(e => { const k = weekStart(e.d); m.set(k, (m.get(k) || 0) + 1); });
     const ks = [...m.keys()].sort().slice(-26); if (!ks.length) { el.innerHTML = '<div class="empty">No dated reports.</div>'; return; }
@@ -522,6 +533,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
         const test = { sign: e => split(e.in).includes(evSel.val), level: e => e.lv === evSel.val, route: e => routeType(e) === evSel.val }[evSel.kind];
         const rows = v.filter(test), name = evSel.kind === "sign" ? (IND[evSel.val] || evSel.val) : evSel.val;
         $("e-sel-h").textContent = (evSel.kind === "sign" ? "Reports naming: " : evSel.kind === "level" ? "Reports rated: " : "Reports with route: ") + name + " (" + rows.length + ")";
+        showParties(evSel.kind === "sign" && evSel.val === "sanctioned_party" ? rows : null);
         table($("e-sel"), "esel", repCols, decorate(rows), ["sc", -1]);
         tile.hidden = false;
         document.querySelectorAll("#p-evasion .hb").forEach(r => { r.classList.remove("sel"); });

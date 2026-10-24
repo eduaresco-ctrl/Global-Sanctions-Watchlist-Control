@@ -129,6 +129,7 @@ def load_events(conn):
         ev["n"] = len(arts)
         ev["outlets"] = "; ".join(sorted({a["source"] for a in arts if a.get("source")}))[:120]
         ev["urls"] = [a["url"] for a in arts][:5]
+        ev["titles"] = [t for a in arts for t in (a.get("title_en"), a.get("title")) if t][:12]
         ev["id"] = eid
         events.append(ev)
     events.sort(key=lambda e: e["date"], reverse=True)

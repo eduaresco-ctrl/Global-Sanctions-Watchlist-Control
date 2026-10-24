@@ -7,7 +7,7 @@ import shutil
 
 import pandas as pd
 
-from . import analyze, geo
+from . import analyze, geo, lists
 from . import sanctions_geo
 from . import lexicon as L
 
@@ -39,7 +39,7 @@ def event_records(ev):
             "ve": e.get("vessel"), "imo": e.get("imo"), "fl": e.get("flag"), "tr": e.get("transport") if e.get("transport") != "Unknown" else None,
             "in": e.get("indicators"), "sc": r["score"], "lv": r["level"], "rs": r["reasons"],
             "ti": (e.get("title_en") or e.get("title") or "")[:200], "ur": e["urls"][0] if e.get("urls") else None,
-            "ac": e.get("actor"), "lc": e.get("location_conf"), "ou": (e.get("outlets") or "")[:70], "ar": e.get("arrests"), "n": e.get("n"), "mo": e.get("mo_summary"),
+            "sl": e.get("listed") or None, "ac": e.get("actor"), "lc": e.get("location_conf"), "ou": (e.get("outlets") or "")[:70], "ar": e.get("arrests"), "n": e.get("n"), "mo": e.get("mo_summary"),
         })
     return out
 
@@ -100,6 +100,7 @@ def write_excel(path, res, table):
 def write_all(res, out_dir, cfg, demo=False):
     os.makedirs(out_dir, exist_ok=True)
     ev = res["events"]
+    lists.annotate(ev, log=lambda m: print(m, flush=True))
     recs = event_records(ev)
     table = export_table(ev)
     table.to_csv(os.path.join(out_dir, "events.csv"), index=False, encoding="utf-8-sig")
