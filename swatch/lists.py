@@ -70,7 +70,7 @@ class Index:
         self.count = {}
         self.rows = {}    # (normalised name, list) -> [name, type, list, programme, country]
 
-    def add(self, name, kind, src, prog="", imo=None, country="", primary=False):
+    def add(self, name, kind, src, prog="", imo=None, country="", primary=False, alias_of=None):
         if "," in name and kind == "Individual":          # OFAC writes "SURNAME, Given names"
             last, _, first = name.partition(",")
             name = first.strip() + " " + last.strip()
@@ -79,8 +79,12 @@ class Index:
         if primary and rec["n"]:
             k = (norm(name), src)
             if k not in self.rows:
-                self.rows[k] = [rec["n"][:90], kind, src, rec["p"][:60], (country or "").strip()[:40]]
+                self.rows[k] = [rec["n"][:90], kind, src, rec["p"][:60], (country or "").strip()[:40], []]
                 self.count[src] = self.count.get(src, 0) + 1
+        if alias_of and alias_of in self.rows and rec["n"]:
+            aka = self.rows[alias_of][5]
+            if len(aka) < 8 and rec["n"][:90] not in aka and norm(rec["n"]) != alias_of[0]:
+                aka.append(rec["n"][:90])
         if imo:
             self.imo[imo] = rec
         ok = len(tok) >= 2 and len(" ".join(tok)) >= (10 if kind == "Individual" else 8)
@@ -106,12 +110,15 @@ def parse_ofac(sdn_bytes, alt_bytes, idx, add_bytes=None):
         m = IMO_RX.search(r[11])
         if m:
             imo = m.group(1)
-        ent[r[0]] = (kind, r[3])
+        nm = r[1]
+        if "," in nm and kind == "Individual":
+            nm = nm.partition(",")[2].strip() + " " + nm.partition(",")[0].strip()
+        ent[r[0]] = (kind, r[3], (norm(nm), "OFAC"))
         idx.add(r[1], kind, "OFAC", r[3], imo, ctry.get(r[0], ""), primary=True)
     if alt_bytes:
         for r in csv.reader(io.StringIO(alt_bytes.decode("utf-8", "replace"))):
             if len(r) >= 4 and r[0] in ent and r[3].strip() not in ("", "-0-"):
-                idx.add(r[3], ent[r[0]][0], "OFAC", ent[r[0]][1])
+                idx.add(r[3], ent[r[0]][0], "OFAC", ent[r[0]][1], alias_of=ent[r[0]][2])
 
 
 def parse_un(xml_bytes, idx):
@@ -129,12 +136,12 @@ def parse_un(xml_bytes, idx):
             for al in el.iter("INDIVIDUAL_ALIAS" if tag == "INDIVIDUAL" else "ENTITY_ALIAS"):
                 a = (al.findtext("ALIAS_NAME") or "").strip()
                 if a:
-                    idx.add(a, kind, "UN", prog)
+                    idx.add(a, kind, "UN", prog, alias_of=(norm(nm), "UN"))
 
 
 def parse_eu(csv_bytes, idx):
     txt = csv_bytes.decode("utf-8-sig", "replace")
-    seen = set()
+    seen = {}
     for r in csv.DictReader(io.StringIO(txt), delimiter=";"):
         nm = (r.get("NameAlias_WholeName") or "").strip()
         if not nm:
@@ -143,9 +150,10 @@ def parse_eu(csv_bytes, idx):
         kind = "Individual" if st.startswith("p") else "Company"
         lid = r.get("Entity_LogicalId") or nm
         first = lid not in seen
-        seen.add(lid)
+        if first:
+            seen[lid] = (norm(nm), "EU")
         cty = (r.get("Address_CountryDescription") or r.get("Citizenship_CountryDescription") or "").strip()
-        idx.add(nm, kind, "EU", r.get("Entity_Regulation_Programme") or "", country=cty, primary=first)
+        idx.add(nm, kind, "EU", r.get("Entity_Regulation_Programme") or "", country=cty, primary=first, alias_of=None if first else seen[lid])
 
 
 def parse_uk(csv_bytes, idx):
@@ -157,7 +165,7 @@ def parse_uk(csv_bytes, idx):
     head = [c.strip().lower() for c in rows[h]]
     col = lambda *names: next((head.index(n) for n in names if n in head), None)
     gt, rg, cc = col("group type", "designation type"), col("regime", "regime name"), col("country", "country of birth", "address country")
-    seen = set()
+    seen = {}
     if "name 6" in head:
         ncols = [head.index(f"name {i}") for i in (1, 2, 3, 4, 5, 6) if f"name {i}" in head]
         gid = col("group id")
@@ -166,8 +174,10 @@ def parse_uk(csv_bytes, idx):
                 continue
             nm = " ".join(r[i].strip() for i in ncols if r[i].strip())
             g = r[gid] if gid is not None else nm
-            idx.add(nm, _kind(r[gt] if gt is not None else ""), "UK", r[rg] if rg is not None else "", country=r[cc] if cc is not None else "", primary=g not in seen)
-            seen.add(g)
+            first = g not in seen
+            if first:
+                seen[g] = (norm(nm), "UK")
+            idx.add(nm, _kind(r[gt] if gt is not None else ""), "UK", r[rg] if rg is not None else "", country=r[cc] if cc is not None else "", primary=first, alias_of=None if first else seen[g])
     else:
         nc, nt, uid = col("name"), col("name type"), col("unique id", "group id")
         if nc is None:
@@ -176,7 +186,10 @@ def parse_uk(csv_bytes, idx):
             if len(r) <= nc or not r[nc].strip():
                 continue
             prim = nt is None or "primary" in r[nt].lower()
-            idx.add(r[nc], _kind(r[gt] if gt is not None else ""), "UK", r[rg] if rg is not None else "", country=r[cc] if cc is not None and len(r) > cc else "", primary=prim)
+            u = r[uid] if uid is not None and len(r) > uid else r[nc]
+            if prim:
+                seen[u] = (norm(r[nc]), "UK")
+            idx.add(r[nc], _kind(r[gt] if gt is not None else ""), "UK", r[rg] if rg is not None else "", country=r[cc] if cc is not None and len(r) > cc else "", primary=prim, alias_of=None if prim else seen.get(u))
 
 
 def parse_csl(csv_bytes, idx, iso):
@@ -193,7 +206,7 @@ def parse_csl(csv_bytes, idx, iso):
         idx.add(r.get("name") or "", kind, lab, (r.get("programs") or "")[:60], country=cty, primary=True)
         for a in (r.get("alt_names") or "").split(";"):
             if a.strip():
-                idx.add(a, kind, lab, r.get("programs") or "")
+                idx.add(a, kind, lab, r.get("programs") or "", alias_of=(norm(r.get("name") or ""), lab))
 
 
 def iso_names():

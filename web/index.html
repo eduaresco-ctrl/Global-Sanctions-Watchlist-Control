@@ -228,13 +228,18 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     <section class="page" id="p-lists" hidden>
       <div class="tile span12"><h3>Sanctions lists</h3><div class="sub" id="sl-sub">Loading…</div>
         <div class="slicers" id="sl-ctl" hidden style="margin-top:8px">
-          <label for="sl-q" class="grow">Search a name<input id="sl-q" type="search" placeholder="Person, company or vessel"></label>
+          <label for="sl-q" class="grow">Search a name<input id="sl-q" type="search" placeholder="Person, company or vessel (typos are fine)"></label>
           <label for="sl-t">Type<select id="sl-t"></select></label>
           <label for="sl-l">List<select id="sl-l"></select></label>
           <label for="sl-c">Country<select id="sl-c"></select></label>
           <button class="btn ghost" type="button" id="sl-reset">Clear</button>
         </div>
       </div>
+      <div class="tile span12" id="sl-mt" hidden><h3>Screen names from a manifest</h3><div class="sub">paste company, person or vessel names from a shipping document, one per line · finds exact, word-order and spelling variants, and also known as names · a match is a lead to check, and no match does not clear a name</div>
+        <textarea id="sl-man" rows="5" placeholder="Blue Star Shipping Ltd&#10;Igor Sechin&#10;MV Sea Owl 1" style="width:100%;box-sizing:border-box;font:inherit;padding:8px;border:1px solid var(--tile-edge);border-radius:8px"></textarea>
+        <div style="display:flex;gap:8px;margin:8px 0;flex-wrap:wrap;align-items:center"><button class="btn" type="button" id="sl-go">Screen</button><button class="btn ghost" type="button" id="sl-clr">Clear</button><span class="small" id="sl-msg"></span></div>
+        <div class="tbl" id="sl-res"></div>
+        <div class="small" style="margin-top:6px">Check a match on the official source: <a href="https://sanctionssearch.ofac.treas.gov/" target="_blank" rel="noopener noreferrer">OFAC</a> · <a href="https://main.un.org/securitycouncil/en/content/un-sc-consolidated-list" target="_blank" rel="noopener noreferrer">UN</a> · <a href="https://www.sanctionsmap.eu/" target="_blank" rel="noopener noreferrer">EU</a> · <a href="https://sanctionslist.fcdo.gov.uk/" target="_blank" rel="noopener noreferrer">UK</a> · <a href="https://www.trade.gov/consolidated-screening-list" target="_blank" rel="noopener noreferrer">US screening list</a></div></div>
       <div class="tile span5" id="sl-ct" hidden><h3>Countries</h3><div class="sub">country given in the list entry (address or nationality) · tap a country to filter the names</div><div class="tbl tall" id="sl-cty"></div></div>
       <div class="tile span7" id="sl-nt" hidden><h3 id="sl-nh">Names</h3><div class="sub">people, companies and vessels on the lists · tap a column to sort · first 500 shown</div><div class="tbl tall" id="sl-tbl"></div></div>
     </section>
@@ -362,8 +367,39 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     sc.onload = () => { SL.loading = false; render(); }; sc.onerror = () => { SL.loading = false; SL.err = true; render(); };
     document.head.appendChild(sc);
   }
+  const nz = s => (s || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const GENERIC = new Set("ltd limited llc llp inc corp co company the of and sa ag gmbh pte fze fzco jsc pjsc oao ooo shipping trading group holding holdings international".split(" "));
+  function lev(a, b, max) {
+    if (Math.abs(a.length - b.length) > max) return max + 1;
+    let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) { const cur = [i]; let lo = i; for (let j = 1; j <= b.length; j++) { const v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); cur.push(v); if (v < lo) lo = v; } if (lo > max) return max + 1; prev = cur; }
+    return prev[b.length];
+  }
+  /* find names on the lists that match a typed or pasted name: Exact, All words (any order) or Close (spelling variants) */
+  function screen(q, cap) {
+    const nq = nz(q), qt = nq.split(" ").filter(t => t.length > 1); if (!qt.length) return [];
+    const key = qt.filter(t => !GENERIC.has(t)); const use = key.length ? key : qt;
+    const out = new Map(), put = (i, label, score) => { const o = out.get(i); if (!o || o.s < score) out.set(i, { r: SL.rows[i], m: label, s: score }); };
+    const sets = use.map(t => new Set(SL.tok.get(t) || []));
+    let inter = sets.length ? [...sets[0]].filter(i => sets.every(x => x.has(i))) : [];
+    inter.forEach(i => { const r = SL.rows[i]; put(i, r.full.includes(nq) ? "Exact" : "All words", r.full.includes(nq) ? 100 : 80 + 10 * Math.min(1, use.length / r.toks.size)); });
+    if (out.size < 5) {
+      const near = use.map(t => { const mx = t.length >= 8 ? 2 : t.length >= 5 ? 1 : 0; const s = new Set(SL.tok.get(t) || []); if (mx) SL.vocab.forEach(v => { if (v !== t && lev(t, v, mx) <= mx) (SL.tok.get(v) || []).forEach(i => s.add(i)); }); return s; });
+      [...near[0]].filter(i => near.every(x => x.has(i))).forEach(i => put(i, "Close", 50));
+    }
+    return [...out.values()].sort((a, b) => b.s - a.s || a.r.n.length - b.r.n.length).slice(0, cap || 200);
+  }
+  function runManifest() {
+    const lines = $("sl-man").value.split(/\n+/).map(x => x.trim()).filter(Boolean).slice(0, 100), rows = []; let hits = 0;
+    lines.forEach(q => { const m = screen(q, 4); if (!m.length) rows.push({ q, m: "No match", n: "", aka: "", t: "", l: "", c: "", p: "" }); else { hits++; m.forEach((x, i) => rows.push({ q: i ? "" : q, m: x.m, n: x.r.n, aka: x.r.aka, t: x.r.t, l: x.r.l, c: x.r.c, p: x.r.p })); } });
+    $("sl-msg").textContent = lines.length ? hits + " of " + lines.length + " entries have a possible match" : "Paste at least one name.";
+    const badge = r => '<b style="color:' + (r.m === "No match" ? "#605e5c" : r.m === "Close" ? "#b7791f" : "#b42318") + '">' + esc(r.m) + '</b>';
+    $("sl-res").innerHTML = rows.length ? '<table><thead><tr><th>Your entry</th><th>Result</th><th>Name on the list</th><th>Also known as</th><th>Type</th><th>List</th><th>Country</th><th>Programme</th></tr></thead><tbody>' + rows.map(r => '<tr><td>' + esc(r.q) + '</td><td>' + badge(r) + '</td><td>' + esc(r.n) + '</td><td class="small">' + esc(r.aka) + '</td><td>' + esc(r.t) + '</td><td>' + esc(r.l) + '</td><td>' + esc(r.c) + '</td><td class="small">' + esc(r.p) + '</td></tr>').join("") + '</tbody></table>' : "";
+  }
   function setupLists() {
-    SL.rows = SANC.rows.map(r => ({ n: r[0], t: TYPE[r[1]] || r[1], l: r[2], p: r[3], c: r[4] }));
+    SL.rows = SANC.rows.map(r => ({ n: r[0], t: TYPE[r[1]] || r[1], l: r[2], p: r[3], c: r[4], aka: (r[5] || []).join("; "), full: [nz(r[0])].concat((r[5] || []).map(nz)) }));
+    SL.tok = new Map(); SL.rows.forEach((r, i) => { r.toks = new Set(r.full.join(" ").split(" ")); r.toks.forEach(t => { if (!SL.tok.has(t)) SL.tok.set(t, []); SL.tok.get(t).push(i); }); });
+    SL.vocab = [...SL.tok.keys()];
     const opt = (el, all, vals) => { el.innerHTML = '<option value="">' + all + '</option>' + vals.map(v => '<option>' + esc(v) + '</option>').join(""); };
     opt($("sl-t"), "All types", [...new Set(SL.rows.map(r => r.t))].sort());
     opt($("sl-l"), "All lists", Object.keys(SANC.counts).sort());
@@ -371,23 +407,26 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     $("sl-q").addEventListener("input", () => { clearTimeout(window.__sq); window.__sq = setTimeout(() => { SL.q = $("sl-q").value.trim().toLowerCase(); render(); }, 200); });
     [["sl-t", "t"], ["sl-l", "l"], ["sl-c", "c"]].forEach(([id, k]) => $(id).addEventListener("change", () => { SL[k] = $(id).value; render(); }));
     $("sl-reset").addEventListener("click", () => { SL.q = SL.t = SL.l = SL.c = ""; $("sl-q").value = ""; ["sl-t", "sl-l", "sl-c"].forEach(i => $(i).value = ""); render(); });
+    $("sl-go").addEventListener("click", runManifest); $("sl-clr").addEventListener("click", () => { $("sl-man").value = ""; $("sl-res").innerHTML = ""; $("sl-msg").textContent = ""; });
     SL.ready = true;
   }
   function renderLists() {
     if (!window.SANC) {
       $("sl-sub").textContent = SL.err ? "The lists are not built yet. They are downloaded at every daily run (10:00 Brussels time); this page fills in after the next run." : "Loading the lists…";
-      $("sl-ctl").hidden = $("sl-ct").hidden = $("sl-nt").hidden = true; if (!SL.err) loadSanc(); return;
+      $("sl-ctl").hidden = $("sl-mt").hidden = $("sl-ct").hidden = $("sl-nt").hidden = true; if (!SL.err) loadSanc(); return;
     }
     if (!SL.ready) setupLists();
-    const hit = (r, skipC) => (!SL.t || r.t === SL.t) && (!SL.l || r.l === SL.l) && (skipC || !SL.c || r.c === SL.c) && (!SL.q || r.n.toLowerCase().includes(SL.q) || (r.p || "").toLowerCase().includes(SL.q));
-    const rows = SL.rows.filter(r => hit(r)), forC = SL.rows.filter(r => hit(r, true));
+    const qm = SL.q ? new Map(screen(SL.q, 2000).map(x => [x.r, x])) : null;
+    const hit = (r, skipC) => (!SL.t || r.t === SL.t) && (!SL.l || r.l === SL.l) && (skipC || !SL.c || r.c === SL.c) && (!qm || qm.has(r));
+    const dec = r => qm ? Object.assign({}, r, { m: qm.get(r).m, s: qm.get(r).s }) : r;
+    const rows = SL.rows.filter(r => hit(r)).map(dec), forC = SL.rows.filter(r => hit(r, true));
     $("sl-sub").textContent = fmt(SL.rows.length) + " names · " + Object.entries(SANC.counts).sort((a, b) => b[1] - a[1]).map(([k, n]) => k + " " + fmt(n)).join(" · ") + " · downloaded " + SANC.asof + ". A list entry is a person, company or vessel, not a whole country: the country is the one given in the entry.";
-    $("sl-ctl").hidden = $("sl-ct").hidden = $("sl-nt").hidden = false;
+    $("sl-ctl").hidden = $("sl-mt").hidden = $("sl-ct").hidden = $("sl-nt").hidden = false;
     const m = new Map(); forC.forEach(r => { if (!r.c) return; const o = m.get(r.c) || { c: r.c, p: 0, co: 0, v: 0, n: 0 }; o.n++; if (r.t === "Person") o.p++; else if (r.t === "Company") o.co++; else o.v++; m.set(r.c, o); });
     table($("sl-cty"), "slc", [{ k: "c", label: "Country", f: r => '<a href="#" data-c="' + esc(r.c) + '">' + esc(r.c) + (SL.c === r.c ? " ✓" : "") + '</a>' }, { k: "n", label: "Total", r: true, f: r => fmt(r.n) }, { k: "p", label: "People", r: true, f: r => fmt(r.p) }, { k: "co", label: "Firms", r: true, f: r => fmt(r.co) }, { k: "v", label: "Ships", r: true, f: r => fmt(r.v) }], [...m.values()], ["n", -1], 400);
     $("sl-cty").querySelectorAll("a[data-c]").forEach(a => a.addEventListener("click", ev => { ev.preventDefault(); SL.c = SL.c === a.dataset.c ? "" : a.dataset.c; $("sl-c").value = SL.c; render(); }));
     $("sl-nh").textContent = "Names (" + fmt(rows.length) + ")";
-    table($("sl-tbl"), "sln", [{ k: "n", label: "Name" }, { k: "t", label: "Type" }, { k: "l", label: "List" }, { k: "p", label: "Programme", cls: "small" }, { k: "c", label: "Country" }], rows, ["n", 1], 500);
+    table($("sl-tbl"), SL.q ? "slnq" : "sln", [{ k: "n", label: "Name" }].concat(SL.q ? [{ k: "m", label: "Match" }] : [], [{ k: "aka", label: "Also known as", cls: "small" }, { k: "t", label: "Type" }, { k: "l", label: "List" }, { k: "p", label: "Programme", cls: "small" }, { k: "c", label: "Country" }]), rows, SL.q ? ["s", -1] : ["n", 1], 500);
   }
   function weekCols(el, rows) {
     const m = new Map(); rows.forEach(e => { const k = weekStart(e.d); m.set(k, (m.get(k) || 0) + 1); });
