@@ -75,6 +75,9 @@ select, input[type="search"] { font: 400 .88rem var(--font); color: var(--ink); 
 .cols .x { font-size: .72rem; color: var(--ink); white-space: nowrap; text-align: center; line-height: 1.25; }
 .cols .x b { color: var(--navy); font-weight: 700; }
 .cols .bar { border-radius: 3px 3px 0 0; }
+.cols .c[data-wk] { cursor: pointer; }
+.cols .c[data-wk]:hover .bar, .cols .c[data-wk]:focus-visible .bar { filter: brightness(.85); }
+.cols .c[data-wk]:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
 .map { position: relative; width: 100%; aspect-ratio: 16 / 9; background: var(--sea); border-radius: 4px; overflow: hidden; touch-action: none; }
 .map svg { width: 100%; height: 100%; display: block; }
 .ctry { fill: var(--land); stroke: var(--land-edge); stroke-width: 1; vector-effect: non-scaling-stroke; }
@@ -331,8 +334,9 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     const mix = t => "rgb(" + [lerp(143, 30, t), lerp(193, 58, t), lerp(234, 92, t)].join(",") + ")";
     el.innerHTML = ks.map((k, i) => {
       const n = m.get(k), t = n / max, mo = +k.slice(5, 7) - 1, newMonth = i === 0 || +ks[i - 1].slice(5, 7) - 1 !== mo;
-      return '<div class="c" title="Week from ' + k + ': ' + fmt(n) + ' reports"><span class="v">' + fmt(n) + '</span><span class="bar" style="height:' + (78 * t).toFixed(1) + '%;background:' + (n === max ? "#e0a030" : mix(t)) + '"></span><span class="x">' + (+k.slice(8)) + '<br><b>' + (newMonth ? MON[mo] : "&nbsp;") + '</b></span></div>';
+      return '<div class="c" role="button" tabindex="0" data-wk="' + k + '" title="Week from ' + k + ': ' + fmt(n) + ' reports · tap to see them"><span class="v">' + fmt(n) + '</span><span class="bar" style="height:' + (78 * t).toFixed(1) + '%;background:' + (n === max ? "#e0a030" : mix(t)) + '"></span><span class="x">' + (+k.slice(8)) + '<br><b>' + (newMonth ? MON[mo] : "&nbsp;") + '</b></span></div>';
     }).join("");
+    el.querySelectorAll(".c[data-wk]").forEach(c => { const go = () => openKpi("week:" + c.dataset.wk); c.addEventListener("click", go); c.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(); } }); });
   }
   let evSel = null;
   const sorts = {};
@@ -587,6 +591,10 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     const v = view(), ov = $("ov"), say = (t, sub) => { $("ov-h").textContent = t; $("ov-sub").textContent = sub || ""; };
     const byDate = rows => decorate(rows.slice().sort((a, b) => b.d.localeCompare(a.d)));
     if (kind === "reports") { say("Seizure reports (" + fmt(v.length) + ")", "newest first · tap a headline to open the article · tap a column to sort"); table($("ov-t"), "ov-r", repCols, byDate(v), ["d", -1], 500); }
+    else if (kind.startsWith("week:")) {
+      const wk = kind.slice(5), end = new Date(new Date(wk + "T00:00:00Z").getTime() + 6 * 864e5).toISOString().slice(0, 10), w = v.filter(e => e.d && weekStart(e.d) === wk);
+      say("Reports in the week of " + wk + " (" + fmt(w.length) + ")", wk + " to " + end + " · newest first · tap a headline to open the article"); table($("ov-t"), "ov-w", repCols, byDate(w), ["d", -1], 500);
+    }
     else if (kind === "high") { const h = v.filter(e => e.lv === "High"); say("High evasion score (" + fmt(h.length) + ")", "reports scoring High (50 or more, with at least two kinds of evidence)"); table($("ov-t"), "ov-h", repCols, byDate(h), ["sc", -1]); }
     else if (kind === "countries") {
       const m = new Map(); v.forEach(e => { if (!e.c) return; const o = m.get(e.c) || { c: e.c, n: 0, high: 0, last: "", at: 0 }; o.n++; if (e.lc === "actor") o.at++; if (e.lv === "High") o.high++; if (e.d > o.last) o.last = e.d; m.set(e.c, o); });
