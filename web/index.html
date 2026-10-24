@@ -68,11 +68,13 @@ select, input[type="search"] { font: 400 .88rem var(--font); color: var(--ink); 
 .sky .b { background: var(--sky); }
 .hb .n { font-size: .75rem; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
 .hb.click { cursor: pointer; } .hb.click:hover .l { text-decoration: underline; }
-.cols { display: flex; align-items: flex-end; gap: 1.5%; height: 210px; padding-top: 18px; overflow-x: auto; }
-.cols .c { flex: 1 0 22px; max-width: 70px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; min-width: 0; }
+.cols { display: flex; align-items: flex-end; gap: 1.5%; height: 260px; padding-top: 18px; overflow-x: auto; }
+.cols .c { flex: 1 1 0; min-width: 17px; max-width: 70px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; min-width: 0; }
 .cols .bar { width: 100%; background: var(--col); min-height: 2px; }
 .cols .v { font-size: .7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.cols .x { font-size: .68rem; color: var(--ink); white-space: nowrap; }
+.cols .x { font-size: .72rem; color: var(--ink); white-space: nowrap; text-align: center; line-height: 1.25; }
+.cols .x b { color: var(--navy); font-weight: 700; }
+.cols .bar { border-radius: 3px 3px 0 0; }
 .map { position: relative; width: 100%; aspect-ratio: 16 / 9; background: var(--sea); border-radius: 4px; overflow: hidden; touch-action: none; }
 .map svg { width: 100%; height: 100%; display: block; }
 .ctry { fill: var(--land); stroke: var(--land-edge); stroke-width: 1; vector-effect: non-scaling-stroke; }
@@ -325,7 +327,12 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     const m = new Map(); rows.forEach(e => { const k = weekStart(e.d); m.set(k, (m.get(k) || 0) + 1); });
     const ks = [...m.keys()].sort().slice(-26); if (!ks.length) { el.innerHTML = '<div class="empty">No dated reports.</div>'; return; }
     const max = Math.max(...ks.map(k => m.get(k)));
-    el.innerHTML = ks.map(k => '<div class="c" title="Week from ' + k + '"><span class="v">' + fmt(m.get(k)) + '</span><span class="bar" style="height:' + (78 * m.get(k) / max).toFixed(1) + '%"></span><span class="x">' + k.slice(5) + '</span></div>').join("");
+    const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], lerp = (a, b, t) => Math.round(a + (b - a) * t);
+    const mix = t => "rgb(" + [lerp(143, 30, t), lerp(193, 58, t), lerp(234, 92, t)].join(",") + ")";
+    el.innerHTML = ks.map((k, i) => {
+      const n = m.get(k), t = n / max, mo = +k.slice(5, 7) - 1, newMonth = i === 0 || +ks[i - 1].slice(5, 7) - 1 !== mo;
+      return '<div class="c" title="Week from ' + k + ': ' + fmt(n) + ' reports"><span class="v">' + fmt(n) + '</span><span class="bar" style="height:' + (78 * t).toFixed(1) + '%;background:' + (n === max ? "#e0a030" : mix(t)) + '"></span><span class="x">' + (+k.slice(8)) + '<br><b>' + (newMonth ? MON[mo] : "&nbsp;") + '</b></span></div>';
+    }).join("");
   }
   let evSel = null;
   const sorts = {};
