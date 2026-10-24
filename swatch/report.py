@@ -100,7 +100,8 @@ def write_excel(path, res, table):
 def write_all(res, out_dir, cfg, demo=False):
     os.makedirs(out_dir, exist_ok=True)
     ev = res["events"]
-    lists.annotate(ev, log=lambda m: print(m, flush=True))
+    _idx = lists.annotate(ev, log=lambda m: print(m, flush=True))
+    lists.write_catalog(_idx, out_dir, log=lambda m: print(m, flush=True))
     recs = event_records(ev)
     table = export_table(ev)
     table.to_csv(os.path.join(out_dir, "events.csv"), index=False, encoding="utf-8-sig")

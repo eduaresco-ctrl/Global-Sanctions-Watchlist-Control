@@ -36,3 +36,22 @@ def test_un_eu():
     idx = make()
     r = lists.find(idx, ["Blue Wave Shipping Company owner and Ali Reza Karimi named", "Sinokor Merchant Marine Co fined"])
     assert {x["l"] for x in r} == {"UN", "EU"}
+
+
+UK_NEW = b'Unique ID,Name,Name type,Designation type,Regime,Country\nRUS1,Blue Star Shipping Ltd,Primary Name,Entity,Russia,Panama\nRUS1,Azure Star Shipping,Alias,Entity,Russia,\nRUS2,Dmitri Alexeyevich Volkov,Primary Name,Individual,Russia,Russia\n'
+UK_OLD = b'Last Updated,01/01/2026\nName 6,Name 1,Name 2,Name 3,Name 4,Name 5,Title,Group Type,Regime,Group ID,Country\nVOLKOV,Dmitri,Alexeyevich,,,,,Individual,Russia,7,Russia\nNORTH WIND TRADING,,,,,,,Entity,Russia,8,Cyprus\n'
+CSL = b"source,entity_number,type,programs,name,alt_names,addresses\nEntity List (EL) - Bureau of Industry and Security,1,Entity,EAR,Zhongxing Test Instruments Co,ZTI Instruments,\"[{'address': 'x', 'country': 'CN'}]\"\nSpecially Designated Nationals (SDN) - Treasury Department,2,Entity,X,Dup Name Skipped Ltd,,\n"
+
+
+def test_uk_and_us():
+    idx = lists.Index()
+    lists.parse_uk(UK_NEW, idx)
+    lists.parse_uk(UK_OLD, idx)
+    lists.parse_csl(CSL, idx, {"CN": "China"})
+    names = {r[0] for r in idx.rows.values()}
+    assert "Blue Star Shipping Ltd" in names and "Dmitri Alexeyevich Volkov" in names
+    assert any(r[0].startswith("NORTH WIND") and r[4] == "Cyprus" for r in idx.rows.values())   # old OFSI format
+    assert "Azure Star Shipping" not in names                      # alias is searchable but not a catalogue row
+    assert lists.find(idx, ["Azure Star Shipping tanker"])          # ... and it still matches
+    assert any(r[2] == "US EL" and r[4] == "China" for r in idx.rows.values())
+    assert not any("Dup Name" in n for n in names)

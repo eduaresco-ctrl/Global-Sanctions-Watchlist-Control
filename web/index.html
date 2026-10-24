@@ -31,6 +31,7 @@ body { background: var(--frame); color: var(--ink); font-family: var(--font); fo
 .btn { font: 600 .85rem var(--font); background: var(--navy); color: #fff; border: 0; border-radius: 8px; padding: 9px 10px; cursor: pointer; }
 .btn.ghost { background: transparent; color: var(--navy); border: 1px solid var(--tile-edge); }
 .canvas { padding: 12px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+.slicers[hidden] { display: none; }
 .slicers { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; padding: 8px 12px; border: 1px solid var(--tile-edge); border-radius: 12px; }
 .slicers label { display: grid; gap: 3px; font-size: .75rem; font-weight: 600; color: var(--muted); flex: 1 1 140px; min-width: 0; }
 .slicers label.grow { flex: 2 1 200px; }
@@ -145,6 +146,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     <button class="nav-btn" type="button" data-page="vessels">Vessels</button>
     <button class="nav-btn" type="button" data-page="regimes">Regimes &amp; Goods</button>
     <button class="nav-btn" type="button" data-page="evasion">Evasion Signs</button>
+    <button class="nav-btn" type="button" data-page="lists">Sanctions Lists</button>
     <button class="nav-btn" type="button" data-page="alerts">Alerts</button>
     <button class="nav-btn" type="button" data-page="library">Report Library</button>
     <button class="nav-btn" type="button" data-page="registry">Source Registry</button>
@@ -221,6 +223,20 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       <div class="tile span6"><h3>Evasion score bands</h3><div class="hbars" id="e-lv"></div><h3 style="margin-top:10px">Reports by route type</h3><div class="hbars sky" id="e-route"></div></div>
       <div class="tile span12" id="e-sel-tile" hidden><h3 id="e-sel-h"></h3><div class="sub">every report behind the bar you tapped · tap a headline to open the article · <a href="#" id="e-sel-clear">clear selection</a></div><div id="e-parties" hidden></div><div class="tbl tall" id="e-sel"></div></div>
       <div class="tile span12"><h3>Highest evasion scores</h3><div class="sub">score 0-100 · bars show method, network, route and scale · see How It Works</div><div class="tbl tall" id="e-table"></div></div>
+    </section>
+
+    <section class="page" id="p-lists" hidden>
+      <div class="tile span12"><h3>Sanctions lists</h3><div class="sub" id="sl-sub">Loading…</div>
+        <div class="slicers" id="sl-ctl" hidden style="margin-top:8px">
+          <label for="sl-q" class="grow">Search a name<input id="sl-q" type="search" placeholder="Person, company or vessel"></label>
+          <label for="sl-t">Type<select id="sl-t"></select></label>
+          <label for="sl-l">List<select id="sl-l"></select></label>
+          <label for="sl-c">Country<select id="sl-c"></select></label>
+          <button class="btn ghost" type="button" id="sl-reset">Clear</button>
+        </div>
+      </div>
+      <div class="tile span5" id="sl-ct" hidden><h3>Countries</h3><div class="sub">country given in the list entry (address or nationality) · tap a country to filter the names</div><div class="tbl tall" id="sl-cty"></div></div>
+      <div class="tile span7" id="sl-nt" hidden><h3 id="sl-nh">Names</h3><div class="sub">people, companies and vessels on the lists · tap a column to sort · first 500 shown</div><div class="tbl tall" id="sl-tbl"></div></div>
     </section>
 
     <section class="page" id="p-alerts" hidden>
@@ -336,6 +352,42 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     box.innerHTML = '<h3 style="margin:10px 0 2px">People, companies and vessels on official sanctions lists (' + list.length + ')</h3><div class="sub">names found in these reports that are written on the US OFAC, UN or EU lists · matched by name, so check the official list before relying on a match</div><div class="tbl" id="e-parties-t"></div>';
     if (!list.length) { $("e-parties-t").innerHTML = '<div class="empty">No listed names found yet. The lists are downloaded and matched at every daily run (10:00 Brussels time); names appear here after the next run.</div>'; return; }
     table($("e-parties-t"), "epart", [{ k: "n", label: "Name" }, { k: "t", label: "Type" }, { k: "l", label: "Listed by" }, { k: "p", label: "Programme", cls: "small" }, { k: "c", label: "Reports", r: true }, { k: "last", label: "Latest" }, { k: "ti", label: "Latest report", f: r => r.ur ? '<a href="' + esc(safe(r.ur)) + '" target="_blank" rel="noopener noreferrer">' + esc(r.ti || "open") + '</a>' : esc(r.ti || "") }], list, ["c", -1]);
+  }
+  /* ---------- Sanctions Lists page: everyone and everything on the OFAC, UN, EU, UK and US lists ---------- */
+  const SL = { q: "", t: "", l: "", c: "", rows: null, err: false, loading: false, ready: false };
+  const TYPE = { Individual: "Person", Company: "Company", Vessel: "Vessel", Aircraft: "Aircraft" };
+  function loadSanc() {
+    if (SL.loading || window.SANC) return; SL.loading = true;
+    const sc = document.createElement("script"); sc.src = "sanctioned.js?v=" + new Date().toISOString().slice(0, 13);
+    sc.onload = () => { SL.loading = false; render(); }; sc.onerror = () => { SL.loading = false; SL.err = true; render(); };
+    document.head.appendChild(sc);
+  }
+  function setupLists() {
+    SL.rows = SANC.rows.map(r => ({ n: r[0], t: TYPE[r[1]] || r[1], l: r[2], p: r[3], c: r[4] }));
+    const opt = (el, all, vals) => { el.innerHTML = '<option value="">' + all + '</option>' + vals.map(v => '<option>' + esc(v) + '</option>').join(""); };
+    opt($("sl-t"), "All types", [...new Set(SL.rows.map(r => r.t))].sort());
+    opt($("sl-l"), "All lists", Object.keys(SANC.counts).sort());
+    opt($("sl-c"), "All countries", [...new Set(SL.rows.map(r => r.c).filter(Boolean))].sort());
+    $("sl-q").addEventListener("input", () => { clearTimeout(window.__sq); window.__sq = setTimeout(() => { SL.q = $("sl-q").value.trim().toLowerCase(); render(); }, 200); });
+    [["sl-t", "t"], ["sl-l", "l"], ["sl-c", "c"]].forEach(([id, k]) => $(id).addEventListener("change", () => { SL[k] = $(id).value; render(); }));
+    $("sl-reset").addEventListener("click", () => { SL.q = SL.t = SL.l = SL.c = ""; $("sl-q").value = ""; ["sl-t", "sl-l", "sl-c"].forEach(i => $(i).value = ""); render(); });
+    SL.ready = true;
+  }
+  function renderLists() {
+    if (!window.SANC) {
+      $("sl-sub").textContent = SL.err ? "The lists are not built yet. They are downloaded at every daily run (10:00 Brussels time); this page fills in after the next run." : "Loading the lists…";
+      $("sl-ctl").hidden = $("sl-ct").hidden = $("sl-nt").hidden = true; if (!SL.err) loadSanc(); return;
+    }
+    if (!SL.ready) setupLists();
+    const hit = (r, skipC) => (!SL.t || r.t === SL.t) && (!SL.l || r.l === SL.l) && (skipC || !SL.c || r.c === SL.c) && (!SL.q || r.n.toLowerCase().includes(SL.q) || (r.p || "").toLowerCase().includes(SL.q));
+    const rows = SL.rows.filter(r => hit(r)), forC = SL.rows.filter(r => hit(r, true));
+    $("sl-sub").textContent = fmt(SL.rows.length) + " names · " + Object.entries(SANC.counts).sort((a, b) => b[1] - a[1]).map(([k, n]) => k + " " + fmt(n)).join(" · ") + " · downloaded " + SANC.asof + ". A list entry is a person, company or vessel, not a whole country: the country is the one given in the entry.";
+    $("sl-ctl").hidden = $("sl-ct").hidden = $("sl-nt").hidden = false;
+    const m = new Map(); forC.forEach(r => { if (!r.c) return; const o = m.get(r.c) || { c: r.c, p: 0, co: 0, v: 0, n: 0 }; o.n++; if (r.t === "Person") o.p++; else if (r.t === "Company") o.co++; else o.v++; m.set(r.c, o); });
+    table($("sl-cty"), "slc", [{ k: "c", label: "Country", f: r => '<a href="#" data-c="' + esc(r.c) + '">' + esc(r.c) + (SL.c === r.c ? " ✓" : "") + '</a>' }, { k: "n", label: "Total", r: true, f: r => fmt(r.n) }, { k: "p", label: "People", r: true, f: r => fmt(r.p) }, { k: "co", label: "Firms", r: true, f: r => fmt(r.co) }, { k: "v", label: "Ships", r: true, f: r => fmt(r.v) }], [...m.values()], ["n", -1], 400);
+    $("sl-cty").querySelectorAll("a[data-c]").forEach(a => a.addEventListener("click", ev => { ev.preventDefault(); SL.c = SL.c === a.dataset.c ? "" : a.dataset.c; $("sl-c").value = SL.c; render(); }));
+    $("sl-nh").textContent = "Names (" + fmt(rows.length) + ")";
+    table($("sl-tbl"), "sln", [{ k: "n", label: "Name" }, { k: "t", label: "Type" }, { k: "l", label: "List" }, { k: "p", label: "Programme", cls: "small" }, { k: "c", label: "Country" }], rows, ["n", 1], 500);
   }
   function weekCols(el, rows) {
     const m = new Map(); rows.forEach(e => { const k = weekStart(e.d); m.set(k, (m.get(k) || 0) + 1); });
@@ -549,6 +601,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       table($("a-cor"), "ac", [{ k: "origin", label: "From" }, { k: "destination", label: "To" }, { k: "events", label: "Reports", r: true, f: r => fmt(r.events) }, { k: "recent", label: "Last 30 d", r: true }, { k: "prior", label: "Prior 30 d", r: true }, { k: "trend", label: "Trend" }, { k: "transit", label: "Via", cls: "small" }, { k: "main_items", label: "Main items", cls: "small" }, { k: "last_seen", label: "Last seen" }], SWD.corridors || [], ["events", -1], 40);
     } else if (p === "library") table($("l-table"), "lib", repCols, decorate(v), ["d", -1], 400);
     else if (p === "registry") renderRegistry();
+    else if (p === "lists") renderLists();
     else if (p === "method") {
       const M = SWD.model || { dimensions: [], bands: {} };
       table($("m-model"), "mm", [{ k: "name", label: "Dimension" }, { k: "cap", label: "Max points", r: true }, { k: "text", label: "What counts", cls: "small" }], M.dimensions || [], ["cap", -1]);
@@ -559,6 +612,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     page = name;
     document.querySelectorAll(".nav-btn").forEach(b => { if (b.dataset.page === name) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
     document.querySelectorAll(".page").forEach(s => s.hidden = s.id !== "p-" + name);
+    document.querySelector("main > .slicers").hidden = name === "lists";
     render(); window.scrollTo({ top: 0 });
   }
   /* ---------- source registry ---------- */
