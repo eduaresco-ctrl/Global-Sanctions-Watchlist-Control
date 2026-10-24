@@ -146,7 +146,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     <button class="nav-btn" type="button" data-page="vessels">Vessels</button>
     <button class="nav-btn" type="button" data-page="regimes">Regimes &amp; Goods</button>
     <button class="nav-btn" type="button" data-page="evasion">Evasion Signs</button>
-    <button class="nav-btn" type="button" data-page="commodity">Commodity Check</button>
+    <button class="nav-btn" type="button" data-page="commodity">Goods Screening</button>
     <button class="nav-btn" type="button" data-page="lists">Sanctions Lists</button>
     <button class="nav-btn" type="button" data-page="alerts">Alerts</button>
     <button class="nav-btn" type="button" data-page="library">Report Library</button>
@@ -227,9 +227,10 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     </section>
 
     <section class="page" id="p-commodity" hidden>
-      <div class="tile span12"><h3>Commodity check: could it be dual-use?</h3>
-        <div class="sub">type the declared commodity or an HS code from the manifest · this is an indicative guide by HS heading and keyword, <b>not</b> the legal control list: an item is only controlled if its technical specifications meet an entry in the current control list (for example EU Annex I)</div>
-        <div class="slicers" style="margin-top:8px"><label for="cm-q" class="grow">Commodity or HS code<input id="cm-q" type="search" placeholder="e.g. 8458, 8542 31, CNC lathe, gyroscope, carbon fibre" autocomplete="off"></label><button class="btn ghost" type="button" id="cm-clr">Clear</button></div>
+      <div class="tile span12"><h3>Goods screening: dual-use, military and sanctioned goods</h3>
+        <div class="sub">type or paste the product description or HS code from a bill of lading, manifest, invoice or packing list · <b>one product per line</b> · checks three things: (1) sanctioned and embargoed goods by regime (EU, UN, US, UK), (2) dual-use and military control families, (3) the Common High Priority Items list · a result is a lead to check; <b>no result is not clearance</b>, because the legal test is the technical specification and the current annex text</div>
+        <textarea id="cm-q" rows="4" placeholder="e.g.&#10;CNC milling machine 8459.61&#10;stainless steel pipes, 7304&#10;Scotch whisky 12 yo, 2208 30&#10;thermal imaging camera" autocomplete="off" spellcheck="false" style="width:100%;box-sizing:border-box;font:inherit;padding:8px;margin-top:8px;border:1px solid var(--tile-edge);border-radius:8px"></textarea>
+        <div style="display:flex;gap:8px;margin:8px 0;flex-wrap:wrap;align-items:center"><button class="btn" type="button" id="cm-go">Screen</button><button class="btn ghost" type="button" id="cm-clr">Clear</button><button class="btn ghost" type="button" id="cm-csv" hidden>Download results (CSV)</button><button class="btn ghost" type="button" id="cm-parties">Also screen the company and vessel names</button><span class="small" id="cm-msg"></span></div>
         <div class="chips" id="cm-ex" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
       </div>
       <div class="tile span12" id="cm-out"></div>
@@ -320,6 +321,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
 <script src="world.js?v=20261024"></script>
 <script src="data.js?v=20261024"></script>
 <script src="registry.js"></script>
+<script src="goods.js?v=20261024"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
@@ -412,7 +414,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     if (r.by === "hs") { const d = r.digits; return d.length >= 6 ? CHPL.filter(x => x[0] === d.slice(0, 6)) : d.length >= 4 ? CHPL.filter(x => x[0].startsWith(d)) : []; }
     const tk = nz(r.q || "").split(" ").filter(t => t.length > 2); return tk.length ? CHPL.filter(x => { const h = nz(x[2]); return tk.every(t => h.includes(t) || h.split(" ").some(w => w.length > 4 && t.length > 4 && lev(w, t, 1) <= 1)); }) : [];
   }
-  const CM_EX = ["8458", "8542 31", "CNC lathe", "drone", "thermal camera", "carbon fibre", "sodium cyanide", "gyroscope"];
+  const CM_EX = ["8458", "8542 31", "CNC lathe", "drone", "thermal camera", "carbon fibre", "sodium cyanide", "gyroscope", "stainless steel pipes 7304", "Scotch whisky 2208 30", "gold bars 7108", "refined diesel 2710", "caviar", "excavator"];
   function cmSearch(q) {
     const raw = q.trim(), digits = raw.replace(/[\s.\-]/g, "");
     if (/^\d{2,10}$/.test(digits)) {
@@ -420,18 +422,66 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       const m = CM.filter(e => e.hs.some(h => digits.length >= 4 ? h === h4 : h.startsWith(digits) || h.slice(0, 2) === ch && digits.length === 2));
       return { by: "hs", digits, items: m, q: raw };
     }
-    const tk = nz(raw).split(" ").filter(t => t.length > 2), sc = CM.map(e => { const hay = nz(e.n + " " + e.kw + " " + e.ex); const s = tk.filter(t => hay.includes(t) || hay.split(" ").some(w => w.length > 4 && t.length > 4 && lev(w, t, 1) <= 1)).length; return { e, s }; }).filter(x => x.s).sort((a, b) => b.s - a.s);
+    const tk = nz(raw).split(" ").filter(t => t.length > 2), sc = CM.map(e => { const hay = nz(e.n + " " + e.kw + " " + e.ex); const hw = hay.split(" "); const s = tk.filter(t => hw.some(w => w === t || (t.length >= 5 && w.startsWith(t)) || (w.length > 4 && t.length > 4 && lev(w, t, 1) <= 1))).length; return { e, s }; }).filter(x => x.s).sort((a, b) => b.s - a.s);
     return { by: "text", q: raw, items: sc.length ? sc.filter(x => x.s === sc[0].s || x.s >= tk.length).map(x => x.e) : [] };
   }
+  /* ---------- Goods screening: sanctioned goods (goods.js) + dual-use families + CHPL, one result per input line ---------- */
+  const SG = (window.SWGOODS && window.SWGOODS.items) || [];
+  const STOP = new Set("the and for with new used set pcs pce piece pieces box boxes carton cartons pack packed packing bag bags kgs kilo gross net total made from type model size spec grade class quality brand unit units each per".split(" "));
+  const HS_RX = /(?:(?:hs|hts|cn|tariff|hscode|commodity)\s*(?:code|no\.?|number|#)?\s*[:=]?\s*)(\d{4}(?:[ .]?\d{2}){0,3})|\b(\d{4}[ .]\d{2}(?:[ .]?\d{2}){0,2})\b|\b(\d{6,10})\b/gi;
+  function splitLine(line) {
+    const codes = []; let rest = line.replace(HS_RX, (m, a, b, c) => { const d = (a || b || c).replace(/[^\d]/g, ""); if (d.length >= 4 && d.length <= 10) { codes.push(d); return " "; } return m; });
+    if (!codes.length) { const m4 = rest.match(/(?:^|[\s,;])(\d{4})(?=\s*(?:[,;]|$))/); if (m4 && +m4[1] >= 1000 && !/^(19|20)\d\d$/.test(m4[1])) { codes.push(m4[1]); rest = rest.replace(m4[0], " "); } }
+    if (!codes.length && /^\s*\d{2,10}(?:[ .]\d{2}){0,3}\s*$/.test(line)) { codes.push(line.replace(/[^\d]/g, "")); rest = ""; }
+    return { codes: [...new Set(codes)], text: rest.replace(/[,;:()\/]+/g, " ").replace(/\s+/g, " ").trim() };
+  }
+  const fuzzyHas = (hay, t) => hay.includes(t) || (t.length > 4 && hay.split(" ").some(w => w.length > 4 && lev(w, t, 1) <= 1));
+  function tokensOf(text) { return nz(text).split(" ").filter(t => t.length > 2 && !STOP.has(t) && !/^\d+$/.test(t)); }
+  function sgSearch(codes, text) {
+    const hit = new Map(), add = (e, why, sp) => { const o = hit.get(e); if (!o) hit.set(e, { e, why: [why], s: why.startsWith("HS") ? 3 : 1, sp: sp || 0 }); else { if (!o.why.includes(why)) o.why.push(why); o.sp = Math.max(o.sp, sp || 0); } };
+    codes.forEach(d => SG.forEach(e => { const ps = e.hs.filter(p => d.startsWith(p) || (d.length < p.length && d.length >= 2 && p.startsWith(d))); if (ps.length) add(e, "HS " + d, Math.max(...ps.map(p => Math.min(p.length, d.length)))); }));
+    const tk = tokensOf(text);
+    if (tk.length) SG.forEach(e => { const hay = nz(e.n + " " + e.kw); const m = tk.filter(t => fuzzyHas(hay, t)); if (m.length && m.length >= Math.ceil(tk.length / 2)) { add(e, "word: " + m.slice(0, 3).join(", "), 9); hit.get(e).s += m.length; } });
+    return [...hit.values()].sort((a, b) => (b.e.lvl === "H") - (a.e.lvl === "H") || b.s - a.s);
+  }
+  function screenLine(line) {
+    const sp = splitLine(line), dual = new Map();
+    sp.codes.forEach(d => cmSearch(d).items.forEach(e => dual.set(e, "HS " + d)));
+    if (tokensOf(sp.text).length) cmSearch(tokensOf(sp.text).join(" ")).items.forEach(e => { if (!dual.has(e)) dual.set(e, "word match"); });
+    let ch = []; sp.codes.forEach(d => ch = ch.concat(chplSearch({ by: "hs", digits: d, q: d })));
+    if (tokensOf(sp.text).length) ch = ch.concat(chplSearch({ by: "text", q: sp.text }));
+    ch = ch.filter((x, i, a) => a.findIndex(y => y[0] === x[0]) === i);
+    return { q: line, codes: sp.codes, text: sp.text, sg: sgSearch(sp.codes, sp.text), dual: [...dual.keys()], dualWhy: dual, chpl: ch };
+  }
+  const CM_LAST = [];
+  function lineCard(r, open) {
+    const broad = r.sg.filter(x => x.sp <= 2 && x.e.partial && x.e.lvl === "H" && x.why.every(w => w.startsWith("HS"))), main = r.sg.filter(x => !broad.includes(x)), nS = r.sg.length, nD = r.dual.length, nC = r.chpl.length, ban = r.sg.filter(x => x.e.lvl === "H").length;
+    const tag = !(nS + nD + nC) ? '<span class="small">No match in this guide</span>' : [ban ? '<b style="color:var(--warn)">' + ban + ' sanctions</b>' : (nS ? "<b>" + nS + " sanctions (check)</b>" : ""), nD ? "<b>" + nD + " dual-use</b>" : "", nC ? "<b>CHPL</b>" : ""].filter(Boolean).join(" · ");
+    let body = "";
+    const sgCard = x => { const e = x.e; return '<div class="alert ' + (e.lvl === "H" ? "HIGH" : "MEDIUM") + '"><b>' + esc(e.n) + '</b><div class="small" style="margin:3px 0">' + esc(e.reg) + ' · ' + esc(e.dir) + '</div><div><b>Instrument:</b> ' + esc(e.ins) + '</div><div><b>Matched on:</b> ' + esc(x.why.join("; ")) + '</div><div><b>What to check:</b> ' + esc(e.note) + (e.partial ? " The annex lists specific codes, so this match is a pointer to the right annex, not a finding." : "") + '</div><div class="small"><a href="' + esc(e.src) + '" target="_blank" rel="noopener noreferrer">Official source</a></div></div>'; };
+    if (main.length) body += '<h4 style="margin:10px 0 4px">Sanctioned or embargoed goods (' + main.length + ')</h4><div style="display:grid;gap:8px">' + main.map(sgCard).join("") + '</div>';
+    if (broad.length) body += '<details style="margin-top:8px"><summary style="cursor:pointer" class="small">Broader regime notes: only the HS chapter matches (' + broad.length + ')</summary><div style="display:grid;gap:8px;margin-top:6px">' + broad.map(sgCard).join("") + '</div></details>';
+    if (nC) body += '<h4 style="margin:10px 0 4px">US Common High Priority Items (' + nC + ')</h4><div class="alert HIGH">' + r.chpl.map(x => '<div>HS ' + dotted(x[0]) + ' · ' + esc(CHPL_TIER[x[1]]) + ' · ' + esc(x[2]) + '</div>').join("") + '<div class="small" style="margin-top:4px">Items found in Russian weapons used in Ukraine. The EU, UK and Japan lists can differ: check each one.</div></div>';
+    if (nD) body += '<h4 style="margin:10px 0 4px">Dual-use and military control families (' + nD + ')</h4><div style="display:grid;gap:8px">' + r.dual.map(e => '<div class="alert ' + (e.military ? "HIGH" : "MEDIUM") + '"><b>' + esc(e.n) + '</b>' + (e.military ? ' <span class="small">· military list</span>' : "") + '<div class="small" style="margin:3px 0">HS headings: ' + e.hs.join(", ") + ' · matched on ' + esc(r.dualWhy.get(e)) + '</div><div><b>Where it is listed:</b> ' + esc(e.cat) + '</div><div><b>Examples:</b> ' + esc(e.ex) + '</div><div><b>What to check:</b> ' + esc(e.chk) + '</div></div>').join("") + '</div>';
+    if (!body) body = '<div class="sub">This does <b>not</b> mean the item is uncontrolled: this guide is indicative and covers the main product families. Compare the goods and the data sheet with the current control lists, and remember catch-all rules can require a licence for unlisted items when the end-use is a concern (handbook, chapters 3 and 7). Try the HS code, a more technical name, or the maker’s part number.</div>';
+    return '<details class="tile" style="padding:8px 12px;margin:0 0 8px"' + (open ? " open" : "") + '><summary style="cursor:pointer;font-weight:600">' + esc(r.q) + ' <span style="font-weight:400">· ' + tag + '</span></summary>' + (r.codes.length ? '<div class="small" style="margin-top:4px">HS code read from the line: ' + r.codes.map(dotted4).join(", ") + '</div>' : "") + body + '</details>';
+  }
+  const dotted4 = c => c.length > 4 ? c.slice(0, 4) + "." + c.slice(4) : c;
   function renderCommodity() {
-    const q = $("cm-q").value; if (!$("cm-ex").children.length) { $("cm-ex").innerHTML = CM_EX.map(x => '<button class="btn ghost" type="button" data-ex="' + esc(x) + '">' + esc(x) + '</button>').join(""); $("cm-ex").querySelectorAll("button").forEach(b => b.addEventListener("click", () => { $("cm-q").value = b.dataset.ex; renderCommodity(); })); }
-    const out = $("cm-out"); if (!q.trim()) { out.innerHTML = '<h3>Result</h3><div class="empty">Type a commodity description or an HS code to see whether it can fall under a dual-use or military control list.</div>'; return; }
-    const r = cmSearch(q), hsNote = r.by === "hs" && r.digits.length < 6 ? "A 6-digit HS code or more narrows this down, and the legal test is always the technical specification." : r.by === "hs" ? "The HS code only points to a product family. Dual-use status depends on the technical specification." : "";
-    const ch = chplSearch(r);
-    const chBox = ch.length ? '<div class="alert HIGH" style="margin:8px 0"><b>On the US Common High Priority Items List (' + ch.length + ' code' + (ch.length > 1 ? "s" : "") + ')</b>' + ch.map(x => '<div>HS ' + dotted(x[0]) + ' · ' + esc(CHPL_TIER[x[1]]) + ' · ' + esc(x[2]) + '</div>').join("") + '<div class="small" style="margin-top:4px">These items turn up in Russian weapons used in Ukraine. Exporting them to Russia and to common transit countries is restricted under EU, US, UK and Japanese rules. The EU, UK and Japan lists can differ from the US list: check each one.</div></div>' : "";
-    if (!r.items.length && ch.length) { out.innerHTML = '<h3>Common High Priority Item (' + ch.length + ')</h3>' + chBox + '<div class="sub">Not in the dual-use families of this guide, but still on the sanctions priority list.</div>'; return; }
-    if (!r.items.length) { out.innerHTML = '<h3>No match in this guide</h3><div class="sub">This does <b>not</b> mean the item is uncontrolled: this guide is indicative and covers the main product families. Compare the goods and data sheet with the current control list, and remember catch-all rules can require a licence for non-listed items when the end-use is a concern (handbook, chapters 3 and 7).</div>'; return; }
-    out.innerHTML = '<h3>' + (r.items.some(e => !e.military) ? "Possible dual-use: check the specifications" : "Military goods: separate military list") + ' (' + r.items.length + ')</h3><div class="sub">' + esc(hsNote) + ' Indicative only; confirm on the official control list.</div>' + chBox + '<div style="display:grid;gap:10px;margin-top:8px">' + r.items.map(e => '<div class="alert ' + (e.military ? "HIGH" : "MEDIUM") + '"><b>' + esc(e.n) + '</b>' + (e.military ? ' <span class="small">· military list</span>' : "") + '<div class="small" style="margin:4px 0">HS headings: ' + e.hs.join(", ") + '</div><div><b>Where it is listed:</b> ' + esc(e.cat) + '</div><div><b>Examples:</b> ' + esc(e.ex) + '</div><div><b>What to check:</b> ' + esc(e.chk) + '</div></div>').join("") + '</div>';
+    if (!$("cm-ex").children.length) { $("cm-ex").innerHTML = CM_EX.map(x => '<button class="btn ghost" type="button" data-ex="' + esc(x) + '">' + esc(x) + '</button>').join(""); $("cm-ex").querySelectorAll("button").forEach(b => b.addEventListener("click", () => { const t = $("cm-q"); t.value = (t.value.trim() ? t.value.replace(/\s+$/, "") + "\n" : "") + b.dataset.ex; renderCommodity(); })); }
+    const lines = $("cm-q").value.split(/\n+/).map(x => x.trim()).filter(Boolean).slice(0, 60), out = $("cm-out"); CM_LAST.length = 0;
+    $("cm-csv").hidden = true; $("cm-msg").textContent = "";
+    if (!lines.length) { out.innerHTML = '<h3>Result</h3><div class="empty">Type or paste product descriptions or HS codes, one per line, to see whether they can fall under a sanctions measure, a dual-use or military control list.</div>'; return; }
+    const res = lines.map(screenLine); res.forEach(r => CM_LAST.push(r));
+    const flagged = res.filter(r => r.sg.length || r.dual.length || r.chpl.length).length;
+    $("cm-msg").textContent = flagged + " of " + res.length + " line" + (res.length > 1 ? "s" : "") + " with a possible match"; $("cm-csv").hidden = res.length < 1;
+    const sum = res.length > 1 ? '<div class="tbl" style="margin-bottom:10px"><table><thead><tr><th>Line</th><th>HS read</th><th>Sanctions</th><th>Dual-use</th><th>CHPL</th></tr></thead><tbody>' + res.map(r => '<tr><td>' + esc(r.q.slice(0, 70)) + '</td><td class="small">' + esc(r.codes.map(dotted4).join(", ")) + '</td><td>' + (r.sg.length ? (r.sg.some(x => x.e.lvl === "H") ? "<b style=\"color:var(--warn)\">" + r.sg.length + "</b>" : r.sg.length) : "–") + '</td><td>' + (r.dual.length || "–") + '</td><td>' + (r.chpl.length ? "Yes" : "–") + '</td></tr>').join("") + '</tbody></table></div>' : "";
+    out.innerHTML = '<h3>Results' + (res.length > 1 ? " (" + res.length + " lines)" : "") + '</h3><div class="sub">Screening aid, not a legal determination. A match means “check this”; the control lists, annexes and licence rules decide. Also check who the shipper, consignee and vessel are (see button above) and where the goods came from.</div>' + sum + res.map((r, i) => lineCard(r, res.length === 1 || (r.sg.length + r.dual.length + r.chpl.length > 0 && i < 3))).join("");
+  }
+  function csvOut() {
+    const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"', rows = [["Line", "HS read", "Sanctions matches", "Dual-use families", "CHPL"].map(q).join(",")];
+    CM_LAST.forEach(r => rows.push([r.q, r.codes.join(" "), r.sg.map(x => x.e.reg + ": " + x.e.n + " (" + x.e.ins + ")").join(" | "), r.dual.map(e => e.n).join(" | "), r.chpl.map(x => x[0] + " " + x[2]).join(" | ")].map(q).join(",")));
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿" + rows.join("\r\n")], { type: "text/csv" })); a.download = "goods_screening_" + new Date().toISOString().slice(0, 10) + ".csv"; document.body.appendChild(a); a.click(); a.remove();
   }
   /* ---------- Sanctions Lists page: everyone and everything on the OFAC, UN, EU, UK and US lists ---------- */
   const SL = { q: "", t: "", l: "", c: "", rows: null, err: false, loading: false, ready: false };
@@ -765,7 +815,9 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     $("r-note").textContent = V.note + " Showing " + fmt(Math.min(rows.length, 500)) + " of " + fmt(rows.length) + ".";
     table($("r-table"), "reg-" + rview, V.cols, rows, V.def, 500);
   }
-  $("cm-q").addEventListener("input", () => { clearTimeout(window.__cq); window.__cq = setTimeout(renderCommodity, 150); }); $("cm-clr").addEventListener("click", () => { $("cm-q").value = ""; renderCommodity(); });
+  $("cm-q").addEventListener("input", () => { clearTimeout(window.__cq); window.__cq = setTimeout(renderCommodity, 250); });
+  $("cm-go").addEventListener("click", renderCommodity); $("cm-clr").addEventListener("click", () => { $("cm-q").value = ""; renderCommodity(); }); $("cm-csv").addEventListener("click", csvOut);
+  $("cm-parties").addEventListener("click", () => { show("lists"); setTimeout(() => { const m = $("sl-man"); if (m && !m.value.trim()) m.focus(); }, 300); });
   $("e-sel-clear").addEventListener("click", ev => { ev.preventDefault(); evSel = null; render(); });
   /* ---------- tap a headline number to see the list behind it ---------- */
   function openKpi(kind, quiet) {

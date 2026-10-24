@@ -22,6 +22,7 @@ Outputs in `docs/`: `index.html` (dashboard), `data.js`, `events.csv`, `sanction
 - **Vessels**: names, IMO numbers, flags; repeat vessels are the strongest leads.
 - **Regimes & Goods**: UN, EU, US, UK programmes (Russia, Iran, DPRK, Syria, Venezuela, Libya, Yemen, Somalia, Sudan, DR Congo, Mali, Haiti, Myanmar, Afghanistan, counter-terrorism, Cuba) against what was seized.
 - **Evasion Signs**: AIS off, ship-to-ship transfer, false flag, shell company, third-country re-export, false declaration, no insurance, price cap, sanctioned party named.
+- **Goods Screening**: an officer pastes product descriptions or HS codes from a bill of lading, manifest, invoice or packing list (one per line) and gets, for each line, matches against sanctioned and embargoed goods by regime (EU, UN, US, UK; data in `web/goods.js`), dual-use and military control families, and the Common High Priority Items list. Indicative only: update `web/goods.js` when annexes change, and never treat "no match" as clearance. A button jumps to the Sanctions Lists page to screen company and vessel names.
 - **Alerts**, **Report Library**, **How It Works** (score model in plain words).
 
 ## Configure
