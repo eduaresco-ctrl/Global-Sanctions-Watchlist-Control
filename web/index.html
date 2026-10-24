@@ -146,6 +146,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     <button class="nav-btn" type="button" data-page="vessels">Vessels</button>
     <button class="nav-btn" type="button" data-page="regimes">Regimes &amp; Goods</button>
     <button class="nav-btn" type="button" data-page="evasion">Evasion Signs</button>
+    <button class="nav-btn" type="button" data-page="commodity">Commodity Check</button>
     <button class="nav-btn" type="button" data-page="lists">Sanctions Lists</button>
     <button class="nav-btn" type="button" data-page="alerts">Alerts</button>
     <button class="nav-btn" type="button" data-page="library">Report Library</button>
@@ -223,6 +224,19 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       <div class="tile span6"><h3>Evasion score bands</h3><div class="hbars" id="e-lv"></div><h3 style="margin-top:10px">Reports by route type</h3><div class="hbars sky" id="e-route"></div></div>
       <div class="tile span12" id="e-sel-tile" hidden><h3 id="e-sel-h"></h3><div class="sub">every report behind the bar you tapped · tap a headline to open the article · <a href="#" id="e-sel-clear">clear selection</a></div><div id="e-parties" hidden></div><div class="tbl tall" id="e-sel"></div></div>
       <div class="tile span12"><h3>Highest evasion scores</h3><div class="sub">score 0-100 · bars show method, network, route and scale · see How It Works</div><div class="tbl tall" id="e-table"></div></div>
+    </section>
+
+    <section class="page" id="p-commodity" hidden>
+      <div class="tile span12"><h3>Commodity check: could it be dual-use?</h3>
+        <div class="sub">type the declared commodity or an HS code from the manifest · this is an indicative guide by HS heading and keyword, <b>not</b> the legal control list: an item is only controlled if its technical specifications meet an entry in the current control list (for example EU Annex I)</div>
+        <div class="slicers" style="margin-top:8px"><label for="cm-q" class="grow">Commodity or HS code<input id="cm-q" type="search" placeholder="e.g. 8458, 8542 31, CNC lathe, gyroscope, carbon fibre" autocomplete="off"></label><button class="btn ghost" type="button" id="cm-clr">Clear</button></div>
+        <div class="chips" id="cm-ex" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
+      </div>
+      <div class="tile span12" id="cm-out"></div>
+      <div class="tile span12"><h3>Check the official sources</h3><ul class="inf"><li><a href="https://eur-lex.europa.eu/eli/reg/2021/821/oj" target="_blank" rel="noopener noreferrer">EU Dual-Use Regulation 2021/821 and Annex I</a> (the legal control list for the EU)</li>
+        <li><a href="https://finance.ec.europa.eu/publications/list-common-high-priority-items_en" target="_blank" rel="noopener noreferrer">EU list of Common High Priority Items</a> and <a href="https://www.bis.gov/licensing/country-guidance/common-high-priority-items-list-chpl" target="_blank" rel="noopener noreferrer">US BIS Common High Priority Items List</a>: HS codes of items found in weapons used against Ukraine</li>
+        <li><a href="https://www.wassenaar.org/control-lists/" target="_blank" rel="noopener noreferrer">Wassenaar Arrangement control lists</a> · <a href="https://www.trade.gov/consolidated-screening-list" target="_blank" rel="noopener noreferrer">US Consolidated Screening List</a></li>
+        <li>Your national customs tariff and control list correlation table: the HS code on a manifest can be wrong or vague, so always compare the goods and data sheet with the control list entry. See the handbook, chapter 7.</li></ul></div>
     </section>
 
     <section class="page" id="p-lists" hidden>
@@ -357,6 +371,51 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     box.innerHTML = '<h3 style="margin:10px 0 2px">People, companies and vessels on official sanctions lists (' + list.length + ')</h3><div class="sub">names found in these reports that are written on the US OFAC, UN or EU lists · matched by name, so check the official list before relying on a match</div><div class="tbl" id="e-parties-t"></div>';
     if (!list.length) { $("e-parties-t").innerHTML = '<div class="empty">No listed names found yet. The lists are downloaded and matched at every daily run (10:00 Brussels time); names appear here after the next run.</div>'; return; }
     table($("e-parties-t"), "epart", [{ k: "n", label: "Name" }, { k: "t", label: "Type" }, { k: "l", label: "Listed by" }, { k: "p", label: "Programme", cls: "small" }, { k: "c", label: "Reports", r: true }, { k: "last", label: "Latest" }, { k: "ti", label: "Latest report", f: r => r.ur ? '<a href="' + esc(safe(r.ur)) + '" target="_blank" rel="noopener noreferrer">' + esc(r.ti || "open") + '</a>' : esc(r.ti || "") }], list, ["c", -1]);
+  }
+  /* ---------- Commodity Check: indicative HS heading / keyword guide to possible dual-use goods ---------- */
+  const CM = [
+    { n: "Machine tools: lathes, milling, drilling, grinding, machining centres", hs: ["8456", "8457", "8458", "8459", "8460", "8461", "8462", "8463", "8466"], cat: "Annex I Category 2 (Materials processing), 2B", ex: "Five-axis and high-precision CNC machines; grinders and lathes above set positioning accuracy; EDM machines", chk: "Number of axes, positioning accuracy, spindle and control features. Common diversion route for missile and nuclear programmes.", kw: "cnc lathe milling grinder machining centre machine tool drilling edm" },
+    { n: "Semiconductor manufacturing equipment", hs: ["8486"], cat: "Category 3 (Electronics), 3B", ex: "Lithography, etching, deposition and inspection equipment", chk: "Process type and capability; end-user fab. Often subject to additional national controls.", kw: "semiconductor wafer lithography etching deposition fab chip equipment" },
+    { n: "Integrated circuits, transistors, diodes, photovoltaic and LED parts", hs: ["8541", "8542"], cat: "Category 3 (Electronics), 3A; also Common High Priority Items", ex: "FPGAs, radiation-hardened and high-speed ICs, microprocessors, ADC/DAC, power transistors", chk: "Part number against the data sheet: speed, temperature range, radiation tolerance. Many HS 8542 codes are on the Common High Priority Items lists.", kw: "chip microchip integrated circuit fpga processor transistor diode semiconductor microcontroller" },
+    { n: "Computers, parts and data processing machines", hs: ["8471", "8473"], cat: "Category 4 (Computers), 4A; Category 5 part 2 (information security)", ex: "High-performance computers, accelerators and GPUs, encryption-capable servers", chk: "Performance thresholds and cryptographic functions; check end-user.", kw: "computer server gpu accelerator laptop processor supercomputer" },
+    { n: "Telecommunication, radio and network equipment", hs: ["8517", "8525", "8527", "8529", "8543"], cat: "Category 5 part 1 (Telecommunications) and part 2 (Information security)", ex: "Encryption-capable routers and radios, transceivers, satellite terminals, signal generators", chk: "Frequency range, encryption strength, jamming or interception capability.", kw: "radio transceiver telecom router satellite antenna modem signal generator jammer encryption" },
+    { n: "Radar, radio navigation, GNSS and direction finding", hs: ["8526", "9014", "9015"], cat: "Category 6 (Sensors) and 7 (Navigation and avionics)", ex: "Radar sets, GNSS receivers with military-grade features, gyro-compasses, inertial systems", chk: "Accuracy, speed and altitude limits of GNSS receivers; radar range and type.", kw: "radar gps gnss navigation gyroscope inertial compass direction finding" },
+    { n: "Lasers, cameras, thermal imaging and night vision", hs: ["9013", "9005", "9006", "9015", "8525"], cat: "Category 6 (Sensors and lasers), 6A", ex: "High-power lasers, thermal imaging cameras, image intensifier tubes, high-speed cameras", chk: "Wavelength, power, frame rate and sensor type. Thermal cameras are often controlled by resolution and frame rate.", kw: "laser camera thermal infrared night vision imaging scope binoculars sensor" },
+    { n: "Measuring, testing and analysis instruments", hs: ["9024", "9027", "9030", "9031", "9032"], cat: "Categories 2, 3 and 6; nuclear-related testing (Category 0 and 2)", ex: "Mass spectrometers, coordinate measuring machines, oscilloscopes, spectrum analysers, vibration test systems", chk: "Accuracy and bandwidth against the list entry; ask the buyer's real use.", kw: "mass spectrometer oscilloscope spectrum analyser measuring instrument cmm vibration testing" },
+    { n: "Aircraft, unmanned aerial vehicles and parts", hs: ["8801", "8802", "8803", "8806", "8807"], cat: "Category 9 (Aerospace and propulsion), 9A; MTCR items", ex: "UAVs (drones) above range or payload limits, drone parts, aircraft components", chk: "Range, payload and endurance; flight controllers and engines are controlled separately.", kw: "drone uav unmanned aircraft helicopter airframe propeller flight controller" },
+    { n: "Gas turbines, jet and piston engines and parts", hs: ["8407", "8408", "8409", "8411", "8412"], cat: "Category 9 (Aerospace and propulsion), 9A", ex: "Small turbojets for drones and cruise missiles, gas turbine components, rocket engines", chk: "Thrust and power ratings; end-use as UAV or missile engine.", kw: "turbine turbojet engine rocket engine propulsion jet piston engine" },
+    { n: "Ships, boats and marine equipment", hs: ["8901", "8902", "8903", "8904", "8905", "8906", "8907", "8908", "8483"], cat: "Category 8 (Marine); military vessels fall under the military list", ex: "Submersibles, high-speed craft, underwater vehicles, quiet propulsion", chk: "Vessel type and role; ownership. Combine with the sanctions lists.", kw: "ship vessel boat submarine submersible underwater marine propeller" },
+    { n: "Pumps, valves, compressors, vacuum equipment and cryogenics", hs: ["8413", "8414", "8418", "8481", "8419"], cat: "Category 2 (2B), also chemical and nuclear process equipment", ex: "Corrosion-resistant valves and pumps for chemical plants, vacuum pumps, cryogenic and cooling units, reactors and heat exchangers", chk: "Material (nickel, titanium, fluoropolymer lining), pressure and seal type.", kw: "pump valve compressor vacuum cryogenic reactor heat exchanger fermenter" },
+    { n: "Centrifuges, filters and separation equipment", hs: ["8421"], cat: "Categories 0, 1 and 2: uranium enrichment and biological or chemical processing", ex: "Gas centrifuges and parts, high-speed centrifuges, filters for biological containment", chk: "Rotor material and speed; whether it is lab or industrial equipment.", kw: "centrifuge filter separator enrichment" },
+    { n: "Electric motors, transformers, power converters, magnets, batteries", hs: ["8501", "8503", "8504", "8505", "8507"], cat: "Category 3 (3A225 frequency changers and others), Category 0 and 1", ex: "Frequency converters, high-speed motors, power supplies, permanent magnets", chk: "Output frequency, power and speed; typical in drone and centrifuge programmes.", kw: "motor frequency converter inverter transformer magnet battery power supply" },
+    { n: "Special metals and alloys", hs: ["8101", "8103", "8108", "8109", "8112", "7502", "7505", "7225", "7226", "7228", "7604", "7606"], cat: "Category 1 (Special materials), 1C", ex: "Titanium, tungsten, tantalum, zirconium, beryllium, nickel and maraging steel alloys", chk: "Alloy grade, form (bars, tubes, powders) and strength. Check against the data sheet.", kw: "titanium tungsten tantalum zirconium beryllium nickel alloy steel aluminium alloy metal powder" },
+    { n: "Carbon fibre, aramid and composite materials", hs: ["6815", "5402", "5407", "3920", "7019"], cat: "Category 1 (Special materials), 1C010 and 1C210", ex: "High-strength carbon fibre, prepregs, composite structures", chk: "Specific modulus and tensile strength; aerospace and missile casings.", kw: "carbon fibre fiber composite aramid kevlar prepreg glass fibre" },
+    { n: "Nuclear materials, radioactive isotopes and reactor equipment", hs: ["2612", "2844", "2845", "8401", "2849", "2850"], cat: "Category 0 (Nuclear) and NSG lists", ex: "Uranium, thorium, plutonium, heavy water, graphite, isotopes, reactors", chk: "Always refer to the nuclear regulator and licensing authority; do not handle unknown radioactive items.", kw: "uranium thorium plutonium isotope radioactive nuclear reactor heavy water graphite tritium" },
+    { n: "Chemicals and precursors (chemical weapons and drugs)", hs: ["2811", "2812", "2813", "2825", "2826", "2837", "2920", "2921", "2922", "2929", "2930", "2931", "2933", "3824"], cat: "Category 1 (1C350), Australia Group and CWC schedules", ex: "Hydrogen cyanide, sodium cyanide, fluorides, organophosphorus compounds, amines", chk: "CAS number against the CWC schedules and Australia Group list; quantity and end-use; INCB lists for drug precursors.", kw: "chemical precursor cyanide fluoride phosphorus sarin nerve agent acid amine solvent reagent" },
+    { n: "Biological agents, toxins, culture media and diagnostic reagents", hs: ["3001", "3002", "3821", "3822"], cat: "Category 1 (1C351, 1C353), Australia Group", ex: "Pathogens, toxins, genetic elements, culture media", chk: "Species or agent names; biosafety documentation and permits; refer to the competent health and licensing authorities.", kw: "bacteria virus toxin pathogen culture medium biological sample vaccine strain dna plasmid" },
+    { n: "Explosives, propellants, detonators", hs: ["3601", "3602", "3603", "3604", "3105", "3102", "2834"], cat: "Military list (ML8) and Annex I 1C239; explosives precursors regulations", ex: "Explosives, propellant, detonators, ammonium nitrate and perchlorates", chk: "Composition and quantity; separate explosives licence regimes apply.", kw: "explosive propellant detonator ammonium nitrate perchlorate fuse fireworks" },
+    { n: "Weapons, ammunition and military vehicles (military list)", hs: ["9301", "9302", "9303", "9304", "9305", "9306", "8710", "9307"], cat: "National and EU Common Military List: not the dual-use list", ex: "Firearms, parts, ammunition, armoured vehicles", chk: "Arms licence and end-user certificate; firearms and arms trade rules.", kw: "weapon rifle pistol ammunition cartridge armoured tank gun firearm bomb missile", military: 1 },
+    { n: "Protective equipment (body armour, helmets)", hs: ["6211", "6506", "6307", "3926"], cat: "Military list ML13 and Annex I 1A005", ex: "Ballistic vests, helmets, protective plates", chk: "Ballistic protection level and material.", kw: "body armour armor vest helmet protective plate bulletproof ballistic" },
+    { n: "Rocket, missile and space-related items", hs: ["8802", "8803", "9306", "8479", "8412"], cat: "Category 9 and MTCR Annex", ex: "Rocket motors, flight controls, re-entry materials, launch equipment", chk: "Range and payload of the system; MTCR Category I and II items.", kw: "rocket missile satellite launch space nozzle motor casing" },
+    { n: "Software, technology and data (intangible)", hs: ["8523", "4906", "8471"], cat: "All categories (D and E groups) and Category 5 part 2", ex: "Source code, technical drawings, design files, cloud transfers", chk: "Intangible transfers by email or cloud need a licence if the technology is listed; check what the file contains.", kw: "software source code technology drawing blueprint design data firmware" }
+  ];
+  const CM_EX = ["8458", "8542 31", "CNC lathe", "drone", "thermal camera", "carbon fibre", "sodium cyanide", "gyroscope"];
+  function cmSearch(q) {
+    const raw = q.trim(), digits = raw.replace(/[\s.\-]/g, "");
+    if (/^\d{2,10}$/.test(digits)) {
+      const h4 = digits.slice(0, 4), ch = digits.slice(0, 2);
+      const m = CM.filter(e => e.hs.some(h => digits.length >= 4 ? h === h4 : h.startsWith(digits) || h.slice(0, 2) === ch && digits.length === 2));
+      return { by: "hs", digits, items: m };
+    }
+    const tk = nz(raw).split(" ").filter(t => t.length > 2), sc = CM.map(e => { const hay = nz(e.n + " " + e.kw + " " + e.ex); const s = tk.filter(t => hay.includes(t) || hay.split(" ").some(w => w.length > 4 && t.length > 4 && lev(w, t, 1) <= 1)).length; return { e, s }; }).filter(x => x.s).sort((a, b) => b.s - a.s);
+    return { by: "text", items: sc.filter(x => x.s === sc[0].s || x.s >= tk.length).map(x => x.e) };
+  }
+  function renderCommodity() {
+    const q = $("cm-q").value; if (!$("cm-ex").children.length) { $("cm-ex").innerHTML = CM_EX.map(x => '<button class="btn ghost" type="button" data-ex="' + esc(x) + '">' + esc(x) + '</button>').join(""); $("cm-ex").querySelectorAll("button").forEach(b => b.addEventListener("click", () => { $("cm-q").value = b.dataset.ex; renderCommodity(); })); }
+    const out = $("cm-out"); if (!q.trim()) { out.innerHTML = '<h3>Result</h3><div class="empty">Type a commodity description or an HS code to see whether it can fall under a dual-use or military control list.</div>'; return; }
+    const r = cmSearch(q), hsNote = r.by === "hs" && r.digits.length < 6 ? "A 6-digit HS code or more narrows this down, and the legal test is always the technical specification." : r.by === "hs" ? "The HS code only points to a product family. Dual-use status depends on the technical specification." : "";
+    if (!r.items.length) { out.innerHTML = '<h3>No match in this guide</h3><div class="sub">This does <b>not</b> mean the item is uncontrolled: this guide is indicative and covers the main product families. Compare the goods and data sheet with the current control list, and remember catch-all rules can require a licence for non-listed items when the end-use is a concern (handbook, chapters 3 and 7).</div>'; return; }
+    out.innerHTML = '<h3>' + (r.items.some(e => !e.military) ? "Possible dual-use: check the specifications" : "Military goods: separate military list") + ' (' + r.items.length + ')</h3><div class="sub">' + esc(hsNote) + ' Indicative only; confirm on the official control list.</div><div style="display:grid;gap:10px;margin-top:8px">' + r.items.map(e => '<div class="alert ' + (e.military ? "HIGH" : "MEDIUM") + '"><b>' + esc(e.n) + '</b>' + (e.military ? ' <span class="small">· military list</span>' : "") + '<div class="small" style="margin:4px 0">HS headings: ' + e.hs.join(", ") + '</div><div><b>Where it is listed:</b> ' + esc(e.cat) + '</div><div><b>Examples:</b> ' + esc(e.ex) + '</div><div><b>What to check:</b> ' + esc(e.chk) + '</div></div>').join("") + '</div>';
   }
   /* ---------- Sanctions Lists page: everyone and everything on the OFAC, UN, EU, UK and US lists ---------- */
   const SL = { q: "", t: "", l: "", c: "", rows: null, err: false, loading: false, ready: false };
@@ -641,6 +700,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     } else if (p === "library") table($("l-table"), "lib", repCols, decorate(v), ["d", -1], 400);
     else if (p === "registry") renderRegistry();
     else if (p === "lists") renderLists();
+    else if (p === "commodity") renderCommodity();
     else if (p === "method") {
       const M = SWD.model || { dimensions: [], bands: {} };
       table($("m-model"), "mm", [{ k: "name", label: "Dimension" }, { k: "cap", label: "Max points", r: true }, { k: "text", label: "What counts", cls: "small" }], M.dimensions || [], ["cap", -1]);
@@ -651,7 +711,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     page = name;
     document.querySelectorAll(".nav-btn").forEach(b => { if (b.dataset.page === name) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
     document.querySelectorAll(".page").forEach(s => s.hidden = s.id !== "p-" + name);
-    document.querySelector("main > .slicers").hidden = name === "lists";
+    document.querySelector("main > .slicers").hidden = name === "lists" || name === "commodity";
     render(); window.scrollTo({ top: 0 });
   }
   /* ---------- source registry ---------- */
@@ -689,6 +749,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     $("r-note").textContent = V.note + " Showing " + fmt(Math.min(rows.length, 500)) + " of " + fmt(rows.length) + ".";
     table($("r-table"), "reg-" + rview, V.cols, rows, V.def, 500);
   }
+  $("cm-q").addEventListener("input", () => { clearTimeout(window.__cq); window.__cq = setTimeout(renderCommodity, 150); }); $("cm-clr").addEventListener("click", () => { $("cm-q").value = ""; renderCommodity(); });
   $("e-sel-clear").addEventListener("click", ev => { ev.preventDefault(); evSel = null; render(); });
   /* ---------- tap a headline number to see the list behind it ---------- */
   function openKpi(kind, quiet) {
