@@ -2,27 +2,25 @@
    RSS UK Foreign Office sanctions news: 20 items
    RSS UK Border Force: 20 items
    RSS Hong Kong government press releases (includes Customs): 100 items
-   Official websites (45 searched): 1621 headlines
+   Official websites (45 searched): 1680 headlines
       edition ES/es: 0 headlines
       edition MX/es: 0 headlines
-      edition FR/fr: 1 headlines
+      edition FR/fr: 0 headlines
       edition PT/pt: 0 headlines
       edition DE/de: 0 headlines
       edition NL/nl: 0 headlines
       edition BE/nl: 0 headlines
-      edition RU/ru: 27 headlines
-      edition UA/ru: 27 headlines
+      edition RU/ru: 37 headlines
+      edition UA/ru: 35 headlines
       edition TR/tr: 0 headlines
-      edition AE/ar: 6 headlines
-      edition SA/ar: 6 headlines
+      edition AE/ar: 3 headlines
+      edition SA/ar: 3 headlines
       edition HK/zh: 0 headlines
       edition TW/zh: 0 headlines
-   Google News: 243 headlines
+   Google News: 275 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctioned%20OR%20%22shadow%20flee... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctioned%20OR%20%22shadow%20flee... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28OFAC%20OR%20%22sanctions%20evasion... HTTPError 429
-   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28OFAC%20OR%20%22sanctions%20evasion... HTTPError 429
-   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20sanctioned%20OR%2... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20sanctioned%20OR%2... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanciones%20OR%20%22flota%20fantas... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanciones%20OR%20%22flota%20fantas... HTTPError 429
@@ -38,21 +36,23 @@
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28yaptirim%20OR%20ambargo%29%20%28al... HTTPError 429
       GDELT tr: 0 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%D8%B9%D9%82%D9%88%D8%A8%D8%A7%D8%... HTTPError 429
-   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%D8%B9%D9%82%D9%88%D8%A8%D8%A7%D8%... HTTPError 429
       GDELT ar: 0 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%E5%88%B6%E8%A3%81%20OR%20%E7%A6%8... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%E5%88%B6%E8%A3%81%20OR%20%E7%A6%8... HTTPError 429
       GDELT zh: 0 headlines
    GDELT: 0 headlines
-      3 candidate headlines, 0 new
+      10 candidate headlines, 7 new
 [2/4] Reading articles...
-      read in full: 0; headline + snippet only: 0
+      links resolved: 0 of 7
+   ! 7 links failed: Failed to fetch data attributes from Google News.
+      read in full: 0; headline + snippet only: 7
 [3/4] Extracting facts and storing...
-      stored 0, of which 0 are sanctions-related seizure reports
+      stored 7, of which 0 are sanctions-related seizure reports
 [4/4] Analysing and building report...
-      official lists loaded: OFAC 19,442 names, UN 1,009 names, UK 15,417 names, US EL 3,317 names, US DPL 1,506 names, US ACN 104 names, US DTC 797 names, US UVL 222 names, US CMIC 68 names, US CAP 1 names, US NS-MBS List 56 names, US MEU 70 names, US PLC 78 names, US SSI 286 names, EU 3,020 names
+      list download https://webgate.ec.europa.eu/fsd/fsf/public/files/csvFullSanctionsList failed: ConnectionError
+      official lists loaded: OFAC 19,442 names, UN 1,006 names, UK 15,417 names, US SSI 286 names, US UVL 222 names, US CAP 1 names, US NS-MBS List 56 names, US ACN 104 names, US MEU 70 names, US CMIC 68 names, US DPL 1,506 names, US DTC 797 names, US PLC 78 names, US EL 3,317 names
       9 events name someone or something on an official list
-      sanctions catalogue written: 45,393 names
+      sanctions catalogue written: 42,370 names
 Done. 181 events in report, 13 alerts.
 Open: /home/runner/work/Sanctions-seizure-watch/Sanctions-seizure-watch/docs/index.html
   [HIGH  ] Repeat vessel: Smyrtos appears in 3 separate seizure reports
