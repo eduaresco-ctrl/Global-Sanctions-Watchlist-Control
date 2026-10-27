@@ -216,6 +216,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       <div class="tile span6"><h3>Imposed or enforced by</h3><div class="sub">authority named in the report</div><div class="hbars" id="r-auth"></div></div>
       <div class="tile span6"><h3>What was seized</h3><div class="hbars sky tall" id="r-items"></div></div>
       <div class="tile span6"><h3>Seized by</h3><div class="hbars" id="r-agency"></div><h3 style="margin-top:10px">Transport</h3><div class="hbars" id="r-trans"></div></div>
+      <div class="tile span12" id="r-sel-tile" hidden><h3 id="r-sel-h"></h3><div class="sub">every report behind the bar you tapped · tap a headline to open the article · <a href="#" id="r-sel-clear">clear selection</a></div><div class="tbl tall" id="r-sel"></div></div>
       <div class="tile span12"><h3>Regime × category</h3><div class="sub">number of reports</div><div class="tbl" id="r-matrix"></div></div>
     </section>
 
@@ -565,7 +566,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     }).join("");
     el.querySelectorAll(".c[data-wk]").forEach(c => { const go = () => openKpi("week:" + c.dataset.wk); c.addEventListener("click", go); c.addEventListener("keydown", ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(); } }); });
   }
-  let evSel = null;
+  let evSel = null, rgSel = null;
   const sorts = {};
   function table(el, id, cols, rows, def, limit) {
     const st = sorts[id] || (sorts[id] = { k: def[0], dir: def[1] });
@@ -731,8 +732,17 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       hbars($("v-flags"), cnt(v.filter(e => e.ve || e.imo), e => e.fl).slice(0, 20)); hbars($("v-cargo"), cnt(v.filter(e => e.ve || e.imo), e => e.cg).slice(0, 15));
       table($("v-table"), "vt", [{ k: "name", label: "Vessel", f: r => esc(r.name || "–") }, { k: "imo", label: "IMO" }, { k: "flag", label: "Flag" }, { k: "n", label: "Reports", r: true, f: r => (r.n >= 2 ? "<b>" + r.n + "</b>" : r.n) }, { k: "first", label: "First seen" }, { k: "last", label: "Last seen" }, { k: "placesT", label: "Where", cls: "small" }, { k: "cargoT", label: "Cargo", cls: "small" }, { k: "regT", label: "Regime", cls: "small" }, { k: "title", label: "Latest report", f: r => '<a href="' + esc(safe(r.url)) + '" target="_blank" rel="noopener noreferrer">' + esc(r.title || "open") + '</a>' }], arr, ["n", -1], 300);
     } else if (p === "regimes") {
-      hbars($("r-reg"), cntMany(v, e => split(e.rg)).slice(0, 25)); hbars($("r-auth"), cntMany(v, e => split(e.au)));
-      hbars($("r-items"), cnt(v, e => e.it).slice(0, 30)); hbars($("r-agency"), cnt(v, e => e.ag)); hbars($("r-trans"), cnt(v, e => e.tr));
+      const RS = { reg: ["r-reg", "Regime", e => split(e.rg)], auth: ["r-auth", "Imposed or enforced by", e => split(e.au)], item: ["r-items", "Seized", e => [e.it]], agency: ["r-agency", "Seized by", e => [e.ag]], trans: ["r-trans", "Transport", e => [e.tr]] };
+      const rpick = (kind, val) => { rgSel = (rgSel && rgSel.kind === kind && rgSel.val === val) ? null : { kind, val }; render(); const t = $("r-sel-tile"); if (rgSel && !t.hidden) t.scrollIntoView({ behavior: "smooth", block: "start" }); };
+      hbars($("r-reg"), cntMany(v, e => split(e.rg)).slice(0, 25), { click: l => rpick("reg", l) }); hbars($("r-auth"), cntMany(v, e => split(e.au)), { click: l => rpick("auth", l) });
+      hbars($("r-items"), cnt(v, e => e.it).slice(0, 30), { click: l => rpick("item", l) }); hbars($("r-agency"), cnt(v, e => e.ag), { click: l => rpick("agency", l) }); hbars($("r-trans"), cnt(v, e => e.tr), { click: l => rpick("trans", l) });
+      if (rgSel) {
+        const d = RS[rgSel.kind], rows = v.filter(e => d[2](e).includes(rgSel.val));
+        $("r-sel-h").textContent = "Reports: " + d[1] + " = " + rgSel.val + " (" + rows.length + ")";
+        table($("r-sel"), "rsel", repCols, decorate(rows), ["sc", -1]);
+        $("r-sel-tile").hidden = false;
+        document.querySelectorAll("#p-regimes .hbars .hb").forEach(r => r.classList.toggle("sel", r.parentElement.id === d[0] && r.dataset.l === rgSel.val));
+      } else $("r-sel-tile").hidden = true;
       const cats = cnt(v, e => e.ca).map(x => x[0]), regs = cntMany(v, e => split(e.rg)).map(x => x[0]);
       const mat = regs.map(r => { const row = { reg: r }; cats.forEach(c => row[c] = v.filter(e => split(e.rg).includes(r) && e.ca === c).length); row.total = v.filter(e => split(e.rg).includes(r)).length; return row; });
       table($("r-matrix"), "rm", [{ k: "reg", label: "Regime" }, ...cats.map(c => ({ k: c, label: c, r: true, f: r => r[c] ? '<span class="hotc">' + fmt(r[c]) + '</span>' : "–" })), { k: "total", label: "Total", r: true, f: r => fmt(r.total) }], mat, ["total", -1]);
@@ -818,6 +828,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
   $("cm-q").addEventListener("input", () => { clearTimeout(window.__cq); window.__cq = setTimeout(renderCommodity, 250); });
   $("cm-go").addEventListener("click", renderCommodity); $("cm-clr").addEventListener("click", () => { $("cm-q").value = ""; renderCommodity(); }); $("cm-csv").addEventListener("click", csvOut);
   $("cm-parties").addEventListener("click", () => { show("lists"); setTimeout(() => { const m = $("sl-man"); if (m && !m.value.trim()) m.focus(); }, 300); });
+  $("r-sel-clear").addEventListener("click", ev => { ev.preventDefault(); rgSel = null; render(); });
   $("e-sel-clear").addEventListener("click", ev => { ev.preventDefault(); evSel = null; render(); });
   /* ---------- tap a headline number to see the list behind it ---------- */
   function openKpi(kind, quiet) {
