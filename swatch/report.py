@@ -9,6 +9,7 @@ import pandas as pd
 
 from . import analyze, geo, lists
 from . import sanctions_geo
+from . import sanctions as S
 from . import lexicon as L
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -36,7 +37,7 @@ def event_records(ev):
             "c": e.get("seizure_country"), "p": e.get("seizure_place"), "o": e.get("origin"), "op": e.get("origin_place"),
             "de": e.get("destination"), "dp": e.get("destination_place"), "t": e.get("transit"),
             "kg": e.get("qty_kg"), "bb": e.get("qty_barrels"), "u": e.get("qty_units"), "ut": e.get("unit_type"), "v": (e.get("value_usd") if (e.get("value_usd") or 0) <= 1e9 else None),
-            "ve": e.get("vessel"), "imo": e.get("imo"), "fl": e.get("flag"), "tr": e.get("transport") if e.get("transport") != "Unknown" else None,
+            "ic": 1 if e.get("in_container") else None, "ve": e.get("vessel"), "imo": e.get("imo"), "fl": e.get("flag"), "tr": e.get("transport") if e.get("transport") != "Unknown" else None,
             "in": e.get("indicators"), "sc": r["score"], "lv": r["level"], "rs": r["reasons"],
             "ti": (e.get("title_en") or e.get("title") or "")[:200], "ur": e["urls"][0] if e.get("urls") else None,
             "sl": e.get("listed") or None, "ac": e.get("actor"), "lc": e.get("location_conf"), "ou": (e.get("outlets") or "")[:70], "ar": e.get("arrests"), "n": e.get("n"), "mo": e.get("mo_summary"),
@@ -112,6 +113,7 @@ def write_all(res, out_dir, cfg, demo=False):
         "alerts": [{k: v for k, v in a.items()} for a in res["alerts"][:40]],
         "corridors": res["corridors"][:80], "vessels": [v for v in res["vessels"] if v["events"] >= 1][:80], "hotspots": res["hotspots"][:60],
         "indicators": analyze.LABEL,
+        "sj": sorted(S.SANCTIONED_JURISDICTIONS), "hubs": sorted(S.DIVERSION_HUBS), "tech_cat": S.CAT_TECH,
     }
     open(os.path.join(out_dir, "data.js"), "w", encoding="utf-8").write(
         "window.SWD=" + json.dumps(data, ensure_ascii=False, separators=(",", ":"), default=lambda x: None) + ";")

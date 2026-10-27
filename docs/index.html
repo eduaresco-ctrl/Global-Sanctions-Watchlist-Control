@@ -147,6 +147,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     <button class="nav-btn" type="button" data-page="regimes">Regimes &amp; Goods</button>
     <button class="nav-btn" type="button" data-page="evasion">Evasion Signs</button>
     <button class="nav-btn" type="button" data-page="commodity">Goods Screening</button>
+    <button class="nav-btn" type="button" data-page="tech">Mining &amp; AI Hardware</button>
     <button class="nav-btn" type="button" data-page="lists">Sanctions Lists</button>
     <button class="nav-btn" type="button" data-page="alerts">Alerts</button>
     <button class="nav-btn" type="button" data-page="library">Report Library</button>
@@ -225,6 +226,31 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       <div class="tile span6"><h3>Evasion score bands</h3><div class="hbars" id="e-lv"></div><h3 style="margin-top:10px">Reports by route type</h3><div class="hbars sky" id="e-route"></div></div>
       <div class="tile span12" id="e-sel-tile" hidden><h3 id="e-sel-h"></h3><div class="sub">every report behind the bar you tapped · tap a headline to open the article · <a href="#" id="e-sel-clear">clear selection</a></div><div id="e-parties" hidden></div><div class="tbl tall" id="e-sel"></div></div>
       <div class="tile span12"><h3>Highest evasion scores</h3><div class="sub">score 0-100 · bars show method, network, route and scale · see How It Works</div><div class="tbl tall" id="e-table"></div></div>
+    </section>
+
+    <section class="page" id="p-tech" hidden>
+      <div class="span12 kpis" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+        <div class="tile"><span class="kpi-v" id="x-n">–</span><span class="kpi-k">Mining / AI hardware reports</span></div>
+        <div class="tile"><span class="kpi-v" id="x-sj">–</span><span class="kpi-k">Headed to a sanctioned jurisdiction</span></div>
+        <div class="tile"><span class="kpi-v" id="x-nd">–</span><span class="kpi-k">Destination not stated</span></div>
+        <div class="tile"><span class="kpi-v" id="x-ic">–</span><span class="kpi-k">Seized in containers</span></div>
+        <div class="tile"><span class="kpi-v" id="x-val">–</span><span class="kpi-k">Stated value, USD m</span></div>
+      </div>
+      <div class="tile span12"><h3>Crypto-mining machines and AI hardware</h3>
+        <div class="sub">ASIC miners and mining rigs, GPUs, AI accelerators and AI servers named in seizure reports · the slicers above apply · <b>"headed to a sanctioned jurisdiction" means the report names that country as the destination</b>; reports that state no destination are counted separately and are not cleared · category is read from headline keywords, so some reports may be missed or wrongly included: check the link</div>
+        <div class="tabs" role="group" aria-label="Hardware filters">
+          <button type="button" data-xf="sub:" aria-pressed="true">All</button>
+          <button type="button" data-xf="sub:mining" aria-pressed="false">Crypto-mining machines</button>
+          <button type="button" data-xf="sub:ai" aria-pressed="false">AI hardware</button>
+          <button type="button" data-xf="sj" aria-pressed="false">Sanctioned destination only</button>
+          <button type="button" data-xf="ctr" aria-pressed="false">Containers only</button>
+        </div></div>
+      <div class="tile span6"><h3>What was seized</h3><div class="hbars sky" id="x-items"></div></div>
+      <div class="tile span6"><h3>Stated destination</h3><div class="sub">⚠ = a sanctioned jurisdiction (UN / EU / US programme)</div><div class="hbars tall" id="x-dest"></div></div>
+      <div class="tile span6"><h3>Origin</h3><div class="hbars" id="x-orig"></div></div>
+      <div class="tile span6"><h3>Transit and diversion hubs</h3><div class="sub">⚠ = a hub often named for diverted goods (a pointer for analysts, not a verdict on the country)</div><div class="hbars" id="x-transit"></div></div>
+      <div class="tile span12"><h3>Headed to a sanctioned jurisdiction</h3><div class="tbl tall" id="x-sjtable"></div></div>
+      <div class="tile span12"><h3>All mining and AI hardware reports</h3><div class="tbl tall" id="x-table"></div></div>
     </section>
 
     <section class="page" id="p-commodity" hidden>
@@ -340,6 +366,16 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
   const asof = new Date((SWD.asof || "2026-01-01") + "T00:00:00Z");
   $("source-line").textContent = "Open-source news reports collected by Sanctions Seizure Watch. Data to " + (SWD.asof || "–") + " · built " + (SWD.generated || "–") + ". Facts are read automatically from news reports and can be wrong: verify through the link.";
   if (SWD.demo) $("demo-warn").hidden = false;
+  /* ---------- Crypto-mining & AI hardware ---------- */
+  const TECH = SWD.tech_cat || "Crypto-mining & AI hardware", ITEM_MINE = "Crypto-mining machines (ASIC / rigs)", ITEM_AI = "AI accelerators / GPUs / AI servers";
+  const SJ = new Set(SWD.sj || ["Russia", "Iran", "North Korea", "Syria", "Venezuela", "Belarus", "Libya", "Yemen", "Somalia", "Sudan", "South Sudan", "DR Congo", "Central African Republic", "Mali", "Haiti", "Myanmar", "Afghanistan", "Cuba", "Nicaragua", "Zimbabwe", "Eritrea", "Lebanon", "Iraq"]);
+  const HUBS = new Set(SWD.hubs || ["United Arab Emirates", "Turkey", "Kazakhstan", "Armenia", "Kyrgyzstan", "Georgia", "Hong Kong", "Uzbekistan", "Tajikistan", "Serbia", "Belarus", "Malaysia", "Singapore", "Oman", "Azerbaijan", "Mongolia", "China", "India", "Egypt", "Panama", "Cyprus", "Malta", "Greece", "Djibouti", "Bahrain", "Qatar"]);
+  /* reports filed before this category existed are re-read here from the headline; new runs of the daily job do the same in swatch/sanctions.py */
+  const T_MINE = /\b(?:asic\s+(?:miners?|mining|machines?|rigs?)|(?:bitcoin|crypto\w*)[- ]?min(?:ing|ers?)\s+(?:machines?|equipment|hardware|rigs?|farms?|devices?)|antminer|whatsminer|avalon\s*miner|bitmain|microbt|hash\s?rate)\b/i;
+  const T_AI = /\b(?:gpus?|nvidia|h100|h200|h800|a100|a800|b200|gb200|ai\s+(?:chips?|accelerators?|servers?|processors?|hardware)|supercomput\w*|graphics\s+(?:cards?|processing\s+units?))\b/i;
+  E.forEach(e => { if (e.ca === TECH || e.ca === "Vessel / tanker") return; const s = (e.ti || "") + " " + (e.it || ""); if (T_MINE.test(s)) { e.ca = TECH; e.it = ITEM_MINE; } else if (T_AI.test(s)) { e.ca = TECH; e.it = ITEM_AI; } });
+  const xState = { sub: "", sj: false, ctr: false };
+  const inCtr = e => !!e.ic || /container/i.test((e.ti || "") + " " + (e.tr || ""));
 
   /* ---------- slicers ---------- */
   function fillSel(el, all, vals) { const cur = el.value; el.innerHTML = '<option value="">' + all + '</option>' + vals.map(v => '<option value="' + esc(v[0]) + '">' + esc(v[1]) + '</option>').join(""); if (vals.some(v => v[0] === cur)) el.value = cur; }
@@ -707,6 +743,28 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
   /* ---------- render ---------- */
   const routeKey = e => { const loc = e.lc === "actor" ? null : e.c; return e.o && e.de && e.o !== e.de ? e.o + " → " + e.de : (e.o && loc && e.o !== loc && !e.de) ? e.o + " → " + loc : (e.de && loc && e.de !== loc && !e.o) ? loc + " → " + e.de : null; };
   let curKpi = null;
+  function renderTech(v) {
+    const all = v.filter(e => e.ca === TECH);
+    let rows = all.filter(e => !xState.sub || (xState.sub === "mining" ? e.it === ITEM_MINE : e.it === ITEM_AI));
+    if (xState.sj) rows = rows.filter(e => SJ.has(e.de));
+    if (xState.ctr) rows = rows.filter(inCtr);
+    $("x-n").textContent = fmt(rows.length); $("x-sj").textContent = fmt(rows.filter(e => SJ.has(e.de)).length); $("x-nd").textContent = fmt(rows.filter(e => !e.de).length);
+    $("x-ic").textContent = fmt(rows.filter(inCtr).length); $("x-val").textContent = (rows.reduce((s, e) => s + (e.v || 0), 0) / 1e6).toFixed(1);
+    document.querySelectorAll("#p-tech [data-xf]").forEach(b => { const k = b.dataset.xf; b.setAttribute("aria-pressed", String(k.startsWith("sub:") ? xState.sub === k.slice(4) : !!xState[k])); });
+    hbars($("x-items"), cnt(rows, e => e.it));
+    const dest = cnt(rows, e => e.de).map(([c, n]) => [(SJ.has(c) ? "⚠ " : "") + c, n]);
+    const nd = rows.filter(e => !e.de).length; if (nd) dest.push(["(destination not stated)", nd]);
+    hbars($("x-dest"), dest.slice(0, 30)); hbars($("x-orig"), cnt(rows, e => e.o).slice(0, 20));
+    hbars($("x-transit"), cntMany(rows, e => split(e.t)).slice(0, 20).map(([c, n]) => [(HUBS.has(c) ? "⚠ " : "") + c, n]));
+    const cols = [
+      { k: "d", label: "Date" }, { k: "it", label: "Seized" },
+      { k: "de", label: "Destination", f: r => r.de ? (SJ.has(r.de) ? "<b>⚠ " + esc(r.de) + "</b>" : esc(r.de)) : '<span class="small">not stated</span>' },
+      { k: "route", label: "Route", cls: "small" }, { k: "place", label: "Seized in" },
+      { k: "ctr", label: "Container", f: r => inCtr(r) ? "yes" : "–" }, { k: "q", label: "Quantity", cls: "small" },
+      { k: "sc", label: "Score", r: true, f: r => badge(r.lv) + " " + r.sc }, { k: "ti", label: "Report", f: link }];
+    table($("x-sjtable"), "xsj", cols, decorate(rows.filter(e => SJ.has(e.de))), ["d", -1]);
+    table($("x-table"), "xall", cols, decorate(rows), ["d", -1]);
+  }
   function render() { renderPage(); if (curKpi && !$("ov").hidden) openKpi(curKpi, true); }
   function renderPage() {
     const v = view(), p = page;
@@ -718,6 +776,8 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       weekCols($("o-weeks"), v); hbars($("o-cats"), cnt(v, e => e.ca));
       hbars($("o-countries"), cnt(v, e => e.c).slice(0, 60), { click: c => { $("f-ctry").value = c; render(); } });
       table($("o-latest"), "ol", repCols, decorate(v.slice().sort((a, b) => b.d.localeCompare(a.d)).slice(0, 12)), ["d", -1]); drawOverviewMap(v);
+    } else if (p === "tech") {
+      renderTech(v);
     } else if (p === "routes") {
       drawRouteMap(v);
       hbars($("t-corr"), cnt(v, routeKey).slice(0, 30));
@@ -870,6 +930,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
   $("f-q").addEventListener("input", () => { clearTimeout(window.__t); window.__t = setTimeout(render, 200); });
   $("f-reset").addEventListener("click", () => { $("f-period").value = "0"; ["f-regime", "f-cat", "f-ctry", "f-level"].forEach(i => $(i).value = ""); $("f-q").value = ""; render(); });
   document.querySelectorAll(".nav-btn").forEach(b => b.addEventListener("click", () => show(b.dataset.page)));
+  document.querySelectorAll("#p-tech [data-xf]").forEach(b => b.addEventListener("click", () => { const k = b.dataset.xf; if (k.startsWith("sub:")) xState.sub = k.slice(4); else xState[k] = !xState[k]; render(); }));
   document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => { layer = b.dataset.layer; document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false")); render(); }));
   render();
 })();

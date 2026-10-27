@@ -47,12 +47,27 @@ CAT_ASSET = "Cash, crypto & financial assets"
 CAT_METAL = "Metals, minerals & commodities"
 CAT_VEH = "Vehicles & machinery"
 CAT_OTHER = "Other sanctioned goods"
+CAT_TECH = "Crypto-mining & AI hardware"
 
 _VNOUN_LAT = (r"tankers?|vessels?|ships?|cargo\s+ships?|bulk\s+carriers?|freighters?|petroleros?|buques?|barcos?|navires?|petroliers?|navios?|schip|schiff\w*|tanker\w*|gemi\w*")
 _VNOUN_OTHER = ("танкер\\w*|судн\\w*|судно|судна|корабл\\w*|ناقلة|سفينة|سفن|油轮|油輪|船舶|货轮|貨輪|轮船")
 VESSEL_RX = rx(r"(?<![a-z])(?:" + _VNOUN_LAT + r")(?![a-z])", _VNOUN_OTHER)
 
 ITEMS = [
+    # --- crypto-mining and AI hardware: listed first so it wins over the generic electronics / chips / crypto items below
+    (CAT_TECH, "Crypto-mining machines (ASIC / rigs)", rx(
+        r"\basic\s+(?:miners?|mining|machines?|rigs?)", r"(?:bitcoin|crypto(?:currency|currencies)?)[- ]min(?:ing|ers?)\s+(?:machines?|equipment|hardware|rigs?|farms?|devices?|containers?)",
+        r"(?:bitcoin|crypto(?:currency|currencies)?)\s+min(?:ing|ers?)\s+(?:machines?|equipment|hardware|rigs?|farms?|devices?|containers?)",
+        r"mining\s+(?:rigs?|machines?|equipment|hardware|farms?|devices?|containers?)\b(?=.{0,80}(?:bitcoin|crypto|asic|hash|antminer|whatsminer|sanction|export))",
+        r"antminer", r"whatsminer", r"avalon\s*miner", r"bitmain", r"microbt", r"hash\s?rate", r"\bth/s\b", r"terahash",
+        r"\bminers?\b(?=.{0,40}(?:bitcoin|crypto|hashrate|antminer|whatsminer|asic))",
+        r"mineria\s+(?:de\s+)?(?:bitcoin|cripto\w*)", r"equipos?\s+de\s+mineria", r"mineurs?\s+(?:de\s+)?(?:bitcoin|crypto\w*)", r"майнинг\w*\s+(?:оборудован|ферм)", r"майнер", r"ферм\w*\s+для\s+майнинг", "矿机", "比特币挖矿", "挖矿设备")),
+    (CAT_TECH, "AI accelerators / GPUs / AI servers", rx(
+        r"\bgpus?\b", r"graphics\s+(?:processing\s+units?|cards?|chips?)", r"nvidia", r"\b(?:h100|h200|h800|a100|a800|b100|b200|gb200|l40s?|mi300x?)\b", r"\bh20\s+(?:chips?|gpus?)",
+        r"\bai\s+(?:chips?|accelerators?|processors?|hardware|servers?|supercomput\w*|data\s*cent\w*|computing)", r"artificial\s+intelligence\s+(?:chips?|hardware|servers?|accelerators?|processors?)",
+        r"(?:advanced|high[- ]end|high[- ]performance)\s+(?:ai\s+|computing\s+|graphics\s+)?(?:chips?|processors?|servers?|computers?)", r"supercomput", r"\bhpc\b",
+        r"data\s*cent(?:er|re)s?\s+(?:equipment|hardware|servers?)", r"tensor\s+(?:core|processing)", r"neural\s+(?:processing|network)\s+(?:chips?|hardware)",
+        r"\btpus?\b(?=.{0,30}(?:chip|google|ai))", "显卡", "人工智能芯片", "算力", "видеокарт", r"графическ\w+\s+(?:процессор|карт)", "ии-чип", r"процессор\w*\s+для\s+ии")),
     (CAT_ASSET, "Crypto wallets, exchanges & servers", rx(r"crypto(?:currency)?\s+(?:wallets?|exchanges?|platforms?|mixers?|addresses)", r"(?:wallets?|addresses)\b(?=.{0,30}(?:crypto|bitcoin|usdt|tether|ethereum|seiz|frozen))", r"mining\s+(?:rigs?|farms?|machines?)", r"(?:crypto|exchange)\s+(?:servers?|domains?)", r"garantex", r"grinex")),
     # (category, label, pattern)   -- first match in this order names the item
     (CAT_WMD, "Nuclear / missile-related items", rx(r"centrifuge", r"maraging", r"uranium", r"nuclear[- ](?:related|material|component|equipment)", r"ballistic\s+missile\s+(?:propellant|fuel)", r"propellant", r"proliferation[- ]sensitive", r"\bwmd\b", r"weapons\s+of\s+mass\s+destruction")),
