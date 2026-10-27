@@ -69,6 +69,9 @@ sources:
         - 'luxury goods OR cars OR watches OR vodka OR cigarettes seized sanctions North Korea OR Russia OR Iran'
         - 'surveillance OR spyware OR "telecom equipment" seized OR blocked sanctions export'
         - 'machine tools OR CNC OR semiconductors seized OR intercepted export controls Russia OR China'
+        - '"mining machines" OR "mining rigs" OR "ASIC miners" OR Antminer OR Whatsminer seized OR detained OR intercepted sanctions OR "export controls"'
+        - 'bitcoin OR crypto mining equipment customs seized Iran OR Russia OR "North Korea" OR Venezuela'
+        - 'Nvidia OR GPUs OR "AI chips" OR "AI servers" smuggling OR seized OR intercepted OR detained export controls China OR Russia OR Iran'
       es:
         - 'petrolero sancionado OR "flota fantasma" retenido OR incautado'
         - 'sanciones incautan OR decomisan embargo cargamento'
@@ -91,6 +94,7 @@ sources:
         - 'санкции задержан танкер OR судно теневой флот'
         - 'санкции таможня изъяли OR конфисковали товары двойного назначения'
         - 'санкции арестовали яхту OR самолет OR активы'
+        - 'санкции майнинг оборудование OR видеокарты изъяли OR задержали'
       tr:
         - 'yaptirim tanker alikonuldu OR el konuldu golge filo'
         - 'yaptirim gumruk el koydu ihracat Rusya'
@@ -100,6 +104,7 @@ sources:
       zh:
         - '制裁 扣押 OR 查扣 油轮 OR 货轮'
         - '制裁 海关 查获 两用 物项 出口管制'
+        - '制裁 矿机 OR 显卡 OR 人工智能芯片 查获 OR 扣押'
 
   gdelt:                       # global news index; free, no key. Set enabled: false to skip.
     enabled: true
@@ -108,6 +113,7 @@ sources:
         - '(sanctioned OR "shadow fleet" OR embargo OR "export controls" OR "dual-use") (seized OR detained OR impounded OR forfeiture)'
         - '(OFAC OR "sanctions evasion" OR "sanctioned tanker") (seized OR boarded OR intercepted)'
         - '(sanctions OR sanctioned OR embargo) (aircraft OR "real estate" OR crypto OR antiquities OR gold OR "drone components") (seized OR frozen OR forfeiture)'
+        - '(sanctions OR "export controls") ("mining rigs" OR "mining machines" OR "ASIC miners" OR GPUs OR "AI chips" OR Nvidia) (seized OR detained OR intercepted OR smuggling)'
       es:
         - '(sanciones OR "flota fantasma" OR embargo) (incautado OR retenido OR decomisado)'
       fr:
