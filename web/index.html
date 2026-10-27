@@ -161,7 +161,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       <label for="f-regime">Sanctions regime<select id="f-regime"></select></label>
       <label for="f-cat">What was seized<select id="f-cat"></select></label>
       <label for="f-ctry">Seized in<select id="f-ctry"></select></label>
-      <label for="f-level">Evasion score<select id="f-level"><option value="">All</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option></select></label>
+      <select id="f-level" hidden><option value=""></option></select>
       <label class="grow" for="f-q">Search<input type="search" id="f-q" placeholder="Headline, vessel, IMO, place, route, outlet…"></label>
       <button class="btn ghost" id="f-reset" type="button">Clear slicers</button>
     </section>
@@ -171,27 +171,26 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       <div class="span4 kpis">
         <button type="button" class="tile kpi-btn wide" data-kpi="reports" aria-haspopup="dialog" title="Tap to see the list"><span class="kpi-v" id="k-reports">–</span><span class="kpi-k">Seizure reports (events)</span><span class="kpi-more">tap to see the list ›</span></button>
         <button type="button" class="tile kpi-btn" data-kpi="countries" aria-haspopup="dialog" title="Tap to see the list"><span class="kpi-v" id="k-countries">–</span><span class="kpi-k">Countries</span><span class="kpi-more">tap to see the list ›</span></button>
-        <button type="button" class="tile kpi-btn" data-kpi="high" aria-haspopup="dialog" title="Tap to see the list"><span class="kpi-v" id="k-high">–</span><span class="kpi-k">High evasion score</span><span class="kpi-more">tap to see the list ›</span></button>
         <button type="button" class="tile kpi-btn" data-kpi="vessels" aria-haspopup="dialog" title="Tap to see the list"><span class="kpi-v" id="k-vessels">–</span><span class="kpi-k">Vessels seized</span><span class="kpi-more">tap to see the list ›</span></button>
         <button type="button" class="tile kpi-btn" data-kpi="value" aria-haspopup="dialog" title="Tap to see the list"><span class="kpi-v" id="k-value">–</span><span class="kpi-k">Stated value, USD m</span><span class="kpi-more">tap to see the list ›</span></button>
       </div>
       <div class="tile span3"><h3>Reports per week</h3><div class="cols" id="o-weeks"></div></div>
       <div class="tile span5"><h3>What was seized</h3><div class="hbars sky" id="o-cats"></div></div>
-      <div class="tile span8"><h3>Where goods and vessels were seized</h3><div class="sub">dot size = reports · red = a high-score event there · green shading = reports in that country · tap a dot to open it in the Report Library</div><div class="map" id="o-map"></div><div class="map-info" id="o-map-info"></div></div>
+      <div class="tile span8"><h3>Where goods and vessels were seized</h3><div class="sub">dot size = reports · green shading = reports in that country · tap a dot to open it in the Report Library</div><div class="map" id="o-map"></div><div class="map-info" id="o-map-info"></div></div>
       <div class="tile span4"><h3>Reports by country</h3><div class="hbars fill" id="o-countries"></div></div>
       <div class="tile span12"><h3>Latest reports</h3><div class="tbl" id="o-latest"></div></div>
     </section>
 
     <section class="page" id="p-routes" hidden>
       <div class="tile span12"><h3>Routes of sanctioned goods and vessels</h3>
-        <div class="sub">origin → transit → destination · line width = reports · red = High score · pinch or scroll to zoom</div>
+        <div class="sub">origin → transit → destination · line width = reports · pinch or scroll to zoom</div>
         <div class="tabs" role="group" aria-label="Map layers">
           <button type="button" data-layer="routes" aria-pressed="true">Routes</button>
           <button type="button" data-layer="places" aria-pressed="false">Ports &amp; places</button>
           <button type="button" data-layer="hubs" aria-pressed="false">Transit hubs</button>
         </div>
         <div class="map" id="t-map" style="aspect-ratio:2/1"></div>
-        <div class="legend"><span><b style="color:#c0392b">━</b> High</span><span><b style="color:#d08a0d">━</b> Medium</span><span><b style="color:#1e3a5c">━</b> Low</span><span>Routes are drawn only where a report names an origin, a destination or both; the seizure place is used for the missing end.</span></div>
+        <div class="legend"><span>Routes are drawn only where a report names an origin, a destination or both; the seizure place is used for the missing end.</span></div>
         <div class="map-info" id="t-map-info"></div></div>
       <div class="tile span6"><h3>Top routes</h3><div class="hbars tall" id="t-corr"></div></div>
       <div class="tile span6"><h3>Transit and diversion hubs</h3><div class="sub">countries named between origin and destination</div><div class="hbars tall" id="t-transit"></div></div>
@@ -222,9 +221,9 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
 
     <section class="page" id="p-evasion" hidden>
       <div class="tile span6"><h3>Evasion signs named in the reports</h3><div class="sub">share of reports in the slicers · tap a bar to read those reports</div><div class="hbars tall" id="e-ind"></div></div>
-      <div class="tile span6"><h3>Evasion score bands</h3><div class="hbars" id="e-lv"></div><h3 style="margin-top:10px">Reports by route type</h3><div class="hbars sky" id="e-route"></div></div>
+      <div class="tile span6"><h3>Reports by route type</h3><div class="hbars sky" id="e-route"></div></div>
       <div class="tile span12" id="e-sel-tile" hidden><h3 id="e-sel-h"></h3><div class="sub">every report behind the bar you tapped · tap a headline to open the article · <a href="#" id="e-sel-clear">clear selection</a></div><div id="e-parties" hidden></div><div class="tbl tall" id="e-sel"></div></div>
-      <div class="tile span12"><h3>Highest evasion scores</h3><div class="sub">score 0-100 · bars show method, network, route and scale · see How It Works</div><div class="tbl tall" id="e-table"></div></div>
+      <div class="tile span12"><h3>Latest reports with evasion signs</h3><div class="sub">newest first · tap a headline to open the article</div><div class="tbl tall" id="e-table"></div></div>
     </section>
 
     <section class="page" id="p-commodity" hidden>
@@ -301,11 +300,10 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
           <li>Facts are read by rules, with no AI service and no cost: what was seized, which regime, who seized it, vessel name and IMO number, flag, origin, transit, destination, quantity and stated value, and the sanctions-evasion signs the article names.</li>
           <li>Only extracted facts and the article link are stored, not the article text. Open the link to check every item.</li>
         </ul></div>
-      <div class="tile span12"><h3>How the evasion score is built</h3><div class="sub">0-100 · each dimension is capped so one large number cannot decide the level alone</div><div class="tbl" id="m-model"></div><p class="note" id="m-note"></p></div>
       <div class="tile span12"><h3>Limits</h3>
         <ul class="inf">
           <li>News coverage favours large and unusual seizures and some countries and languages; the absence of a report is not the absence of seizures.</li>
-          <li>A sanctions cue in an article does not prove a seizure was made under that regime. The score is a pointer for a closer look, never a finding about a person, company or country.</li>
+          <li>A sanctions cue in an article does not prove a seizure was made under that regime. The evasion signs are a pointer for a closer look, never a finding about a person, company or country.</li>
           <li>Transit hubs are places where diverted goods are often reported. They are leads, not accusations against a state.</li>
         </ul></div>
     </section>
@@ -584,7 +582,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
   }));
   const repCols = [
     { k: "d", label: "Date" }, { k: "it", label: "Seized" }, { k: "regime", label: "Regime", cls: "small" }, { k: "place", label: "Seized in" }, { k: "route", label: "Route", cls: "small" },
-    { k: "ship", label: "Vessel", cls: "small" }, { k: "q", label: "Quantity", cls: "small" }, { k: "sc", label: "Score", r: true, f: r => badge(r.lv) + " " + r.sc }, { k: "ti", label: "Report", f: link },
+    { k: "ship", label: "Vessel", cls: "small" }, { k: "q", label: "Quantity", cls: "small" }, { k: "ti", label: "Report", f: link },
   ];
 
   /* ---------- maps ---------- */
@@ -635,7 +633,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
   function showTip(M, ev, html) { const r = M.box.getBoundingClientRect(); M.tip.innerHTML = html; M.tip.hidden = false; M.tip.style.left = Math.min(ev.clientX - r.left + 12, r.width - 230) + "px"; M.tip.style.top = Math.max(4, ev.clientY - r.top + 12) + "px"; }
   const pt = (c, p) => (p && GP[p]) ? [GP[p][0], GP[p][1]] : (c && GC[c]) ? GC[c] : null;
   const xy = (M, p) => p ? M.proj([p[1], p[0]]) : null;
-  const worst = list => list.reduce((w, e) => LEVELRANK[e.lv] > LEVELRANK[w] ? e.lv : w, "Low");
+  const worst = () => "Low";
 
   function drawOverviewMap(rows) {
     const M = maps["o-map"]; M.layer.selectAll("*").remove(); shade(M, rows);
@@ -713,7 +711,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     if (p === "overview") {
       const vessels = new Set(v.filter(e => e.ve || e.imo).map(e => e.imo || e.ve));
       $("k-reports").textContent = fmt(v.length); $("k-countries").textContent = fmt(new Set(v.map(e => e.c).filter(Boolean)).size);
-      $("k-high").textContent = fmt(v.filter(e => e.lv === "High").length); $("k-vessels").textContent = fmt(vessels.size);
+      $("k-vessels").textContent = fmt(vessels.size);
       $("k-value").textContent = fmt(Math.round(v.reduce((s, e) => s + (e.v || 0), 0) / 1e6));
       weekCols($("o-weeks"), v); hbars($("o-cats"), cnt(v, e => e.ca));
       hbars($("o-countries"), cnt(v, e => e.c).slice(0, 60), { click: c => { $("f-ctry").value = c; render(); } });
@@ -724,7 +722,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       hbars($("t-transit"), cntMany(v, e => split(e.t)).slice(0, 30));
       hbars($("t-orig"), cnt(v, e => e.o).slice(0, 20)); hbars($("t-dest"), cnt(v, e => e.de).slice(0, 20));
       const hot = new Map(); v.forEach(e => { const k = e.p || e.c; if (!k) return; const o = hot.get(k) || { place: k, country: e.c, n: 0, high: 0, items: [] }; o.n++; if (e.lv === "High") o.high++; o.items.push(e.it); hot.set(k, o); });
-      table($("t-hot"), "th", [{ k: "place", label: "Place" }, { k: "country", label: "Country" }, { k: "n", label: "Reports", r: true, f: r => fmt(r.n) }, { k: "high", label: "High score", r: true, f: r => fmt(r.high) }, { k: "it", label: "Main items", cls: "small", f: r => esc(cnt(r.items, x => x).slice(0, 2).map(x => x[0]).join("; ")) }], [...hot.values()], ["n", -1], 40);
+      table($("t-hot"), "th", [{ k: "place", label: "Place" }, { k: "country", label: "Country" }, { k: "n", label: "Reports", r: true, f: r => fmt(r.n) }, { k: "it", label: "Main items", cls: "small", f: r => esc(cnt(r.items, x => x).slice(0, 2).map(x => x[0]).join("; ")) }], [...hot.values()], ["n", -1], 40);
     } else if (p === "vessels") {
       const vv = new Map(); v.filter(e => e.ve || e.imo).forEach(e => { const k = e.imo ? "IMO " + e.imo : e.ve; const o = vv.get(k) || { id: k, name: e.ve, imo: e.imo, flag: e.fl, n: 0, first: e.d, last: e.d, places: new Set(), cargo: new Set(), reg: new Set(), url: e.ur, title: e.ti, lv: e.lv }; o.n++; if (e.d < o.first) o.first = e.d; if (e.d > o.last) o.last = e.d; if (e.p || e.c) o.places.add(e.p || e.c); if (e.cg) o.cargo.add(e.cg); split(e.rg).forEach(r => o.reg.add(r.split(/ [\/(]/)[0])); if (!o.flag && e.fl) o.flag = e.fl; if (!o.name && e.ve) o.name = e.ve; if (LEVELRANK[e.lv] > LEVELRANK[o.lv]) o.lv = e.lv; vv.set(k, o); });
       const arr = [...vv.values()].map(o => Object.assign(o, { placesT: [...o.places].join("; "), cargoT: [...o.cargo].join("; "), regT: [...o.reg].join("; ") }));
@@ -739,7 +737,7 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       if (rgSel) {
         const d = RS[rgSel.kind], rows = v.filter(e => d[2](e).includes(rgSel.val));
         $("r-sel-h").textContent = "Reports: " + d[1] + " = " + rgSel.val + " (" + rows.length + ")";
-        table($("r-sel"), "rsel", repCols, decorate(rows), ["sc", -1]);
+        table($("r-sel"), "rsel", repCols, decorate(rows), ["d", -1]);
         $("r-sel-tile").hidden = false;
         document.querySelectorAll("#p-regimes .hbars .hb").forEach(r => r.classList.toggle("sel", r.parentElement.id === d[0] && r.dataset.l === rgSel.val));
       } else $("r-sel-tile").hidden = true;
@@ -752,7 +750,6 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       const keyOf = {};
       const pick = (kind, val) => { evSel = (evSel && evSel.kind === kind && evSel.val === val) ? null : { kind, val }; render(); };
       hbars($("e-ind"), cntMany(v, e => split(e.in)).map(([k, c]) => { const l = (IND[k] || k) + " (" + pct(c, n) + "%)"; keyOf[l] = k; return [l, c]; }), { click: l => pick("sign", keyOf[l]) });
-      hbars($("e-lv"), cnt(v, e => e.lv).sort((a, b) => LEVELRANK[b[0]] - LEVELRANK[a[0]]), { click: l => pick("level", l) });
       hbars($("e-route"), cnt(v, routeType), { click: l => pick("route", l) });
       const tile = $("e-sel-tile");
       if (evSel) {
@@ -760,17 +757,17 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
         const rows = v.filter(test), name = evSel.kind === "sign" ? (IND[evSel.val] || evSel.val) : evSel.val;
         $("e-sel-h").textContent = (evSel.kind === "sign" ? "Reports naming: " : evSel.kind === "level" ? "Reports rated: " : "Reports with route: ") + name + " (" + rows.length + ")";
         showParties(evSel.kind === "sign" && evSel.val === "sanctioned_party" ? rows : null);
-        table($("e-sel"), "esel", repCols, decorate(rows), ["sc", -1]);
+        table($("e-sel"), "esel", repCols, decorate(rows), ["d", -1]);
         tile.hidden = false;
         document.querySelectorAll("#p-evasion .hb").forEach(r => { r.classList.remove("sel"); });
         const want = evSel.kind === "sign" ? Object.keys(keyOf).find(l => keyOf[l] === evSel.val) : evSel.val;
         document.querySelectorAll("#p-evasion .hb").forEach(r => { if (r.dataset.l === want) r.classList.add("sel"); });
       } else tile.hidden = true;
-      const top = decorate(v.filter(e => e.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, 60));
-      table($("e-table"), "et", [{ k: "sc", label: "Score", r: true, f: r => badge(r.lv) + " " + r.sc }, { k: "d", label: "Date" }, { k: "it", label: "Seized" }, { k: "place", label: "Seized in" }, { k: "route", label: "Route", cls: "small" }, { k: "why", label: "Why", cls: "small", f: r => esc((r.rs || []).join("; ")) }, { k: "ti", label: "Report", f: link }], top, ["sc", -1], 60);
+      const top = decorate(v.filter(e => split(e.in).length).sort((a, b) => b.d.localeCompare(a.d)).slice(0, 60));
+      table($("e-table"), "et", [{ k: "d", label: "Date" }, { k: "it", label: "Seized" }, { k: "place", label: "Seized in" }, { k: "route", label: "Route", cls: "small" }, { k: "why", label: "Why", cls: "small", f: r => esc((r.rs || []).join("; ")) }, { k: "ti", label: "Report", f: link }], top, ["d", -1], 60);
     } else if (p === "alerts") {
       const al = SWD.alerts || [];
-      $("a-sub").textContent = al.length ? al.length + " alerts from the latest run" : "No alerts yet. Trend alerts stay quiet until about 42 days of history exist; high-score events and repeat vessels show as soon as they are found.";
+      $("a-sub").textContent = al.length ? al.length + " alerts from the latest run" : "No alerts yet. Trend alerts stay quiet until about 42 days of history exist; repeat vessels show as soon as they are found.";
       $("a-list").innerHTML = al.map(a => '<div class="alert ' + esc(a.severity) + '"><b>' + esc(a.type) + ': ' + esc(a.title) + '</b>' + esc(a.detail || "") + (a.urls && a.urls[0] ? ' <a href="' + esc(safe(a.urls[0])) + '" target="_blank" rel="noopener noreferrer">link</a>' : "") + '</div>').join("");
       table($("a-cor"), "ac", [{ k: "origin", label: "From" }, { k: "destination", label: "To" }, { k: "events", label: "Reports", r: true, f: r => fmt(r.events) }, { k: "recent", label: "Last 30 d", r: true }, { k: "prior", label: "Prior 30 d", r: true }, { k: "trend", label: "Trend" }, { k: "transit", label: "Via", cls: "small" }, { k: "main_items", label: "Main items", cls: "small" }, { k: "last_seen", label: "Last seen" }], SWD.corridors || [], ["events", -1], 40);
     } else if (p === "library") table($("l-table"), "lib", repCols, decorate(v), ["d", -1], 400);
@@ -778,9 +775,6 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
     else if (p === "lists") renderLists();
     else if (p === "commodity") renderCommodity();
     else if (p === "method") {
-      const M = SWD.model || { dimensions: [], bands: {} };
-      table($("m-model"), "mm", [{ k: "name", label: "Dimension" }, { k: "cap", label: "Max points", r: true }, { k: "text", label: "What counts", cls: "small" }], M.dimensions || [], ["cap", -1]);
-      $("m-note").textContent = "High = " + (M.bands || {}).high + " points or more and at least two dimensions; Medium = " + (M.bands || {}).medium + " or more. " + (M.note || "");
     }
   }
   function show(name) {
@@ -840,12 +834,11 @@ ul.inf { margin: 0; padding-left: 18px; line-height: 1.5; font-size: .88rem; dis
       const wk = kind.slice(5), end = new Date(new Date(wk + "T00:00:00Z").getTime() + 6 * 864e5).toISOString().slice(0, 10), w = v.filter(e => e.d && weekStart(e.d) === wk);
       say("Reports in the week of " + wk + " (" + fmt(w.length) + ")", wk + " to " + end + " · newest first · tap a headline to open the article"); table($("ov-t"), "ov-w", repCols, byDate(w), ["d", -1], 500);
     }
-    else if (kind === "high") { const h = v.filter(e => e.lv === "High"); say("High evasion score (" + fmt(h.length) + ")", "reports scoring High (50 or more, with at least two kinds of evidence)"); table($("ov-t"), "ov-h", repCols, byDate(h), ["sc", -1]); }
     else if (kind === "countries") {
       const m = new Map(); v.forEach(e => { if (!e.c) return; const o = m.get(e.c) || { c: e.c, n: 0, high: 0, last: "", at: 0 }; o.n++; if (e.lc === "actor") o.at++; if (e.lv === "High") o.high++; if (e.d > o.last) o.last = e.d; m.set(e.c, o); });
       const rows = [...m.values()];
       say("Countries (" + rows.length + ")", "countries where something was seized · tap a country to filter the whole dashboard to it");
-      table($("ov-t"), "ov-c", [{ k: "c", label: "Country", f: r => '<a href="#" data-pick="' + esc(r.c) + '">' + esc(r.c) + '</a>' }, { k: "n", label: "Reports", r: true }, { k: "high", label: "High score", r: true }, { k: "at", label: "Of which at sea, seized by this country", r: true }, { k: "last", label: "Latest" }], rows, ["n", -1]);
+      table($("ov-t"), "ov-c", [{ k: "c", label: "Country", f: r => '<a href="#" data-pick="' + esc(r.c) + '">' + esc(r.c) + '</a>' }, { k: "n", label: "Reports", r: true }, { k: "at", label: "Of which at sea, seized by this country", r: true }, { k: "last", label: "Latest" }], rows, ["n", -1]);
       $("ov-t").querySelectorAll("a[data-pick]").forEach(a => a.addEventListener("click", ev => { ev.preventDefault(); const c = a.dataset.pick; if ([...$("f-ctry").options].some(o => o.value === c)) $("f-ctry").value = c; closeKpi(); render(); }));
     } else if (kind === "vessels") {
       const m = new Map(); v.filter(e => e.ve || e.imo).forEach(e => { const k = e.imo || e.ve; const o = m.get(k) || { ve: e.ve || "", imo: e.imo || "", fl: e.fl || "", n: 0, last: "", where: "", ur: e.ur, ti: e.ti, ou: e.ou }; o.n++; if (!o.ve && e.ve) o.ve = e.ve; if (!o.fl && e.fl) o.fl = e.fl; if (e.d > o.last) { o.last = e.d; o.where = [e.p, e.c].filter(Boolean).join(", "); o.ur = e.ur; o.ti = e.ti; o.ou = e.ou; } m.set(k, o); });
