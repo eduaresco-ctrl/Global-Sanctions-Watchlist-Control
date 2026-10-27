@@ -2,29 +2,29 @@
    RSS UK Foreign Office sanctions news: 20 items
    RSS UK Border Force: 20 items
    RSS Hong Kong government press releases (includes Customs): 100 items
-   Official websites (45 searched): 4164 headlines
+   Official websites (45 searched): 4272 headlines
       edition ES/es: 25 headlines
-      edition MX/es: 25 headlines
-      edition FR/fr: 33 headlines
+      edition MX/es: 24 headlines
+      edition FR/fr: 35 headlines
       edition PT/pt: 1 headlines
       edition DE/de: 24 headlines
       edition NL/nl: 4 headlines
       edition BE/nl: 4 headlines
-      edition RU/ru: 178 headlines
-      edition UA/ru: 216 headlines
+      edition RU/ru: 185 headlines
+      edition UA/ru: 181 headlines
       edition TR/tr: 3 headlines
-      edition AE/ar: 93 headlines
-      edition SA/ar: 95 headlines
+      edition AE/ar: 72 headlines
+      edition SA/ar: 96 headlines
       edition HK/zh: 0 headlines
       edition TW/zh: 0 headlines
-   Google News: 6504 headlines
-   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctioned%20OR%20%22shadow%20flee... HTTPError 429
-   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctioned%20OR%20%22shadow%20flee... HTTPError 429
+   Google News: 7450 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28OFAC%20OR%20%22sanctions%20evasion... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28OFAC%20OR%20%22sanctions%20evasion... HTTPError 429
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20sanctioned%20OR%2... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanciones%20OR%20%22flota%20fantas... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanciones%20OR%20%22flota%20fantas... HTTPError 429
       GDELT es: 0 headlines
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20%22flotte%20fanto... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20%22flotte%20fanto... HTTPError 429
       GDELT fr: 0 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28Sanktionen%20OR%20Schattenflotte%2... HTTPError 429
@@ -39,26 +39,26 @@
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%D8%B9%D9%82%D9%88%D8%A8%D8%A7%D8%... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%D8%B9%D9%82%D9%88%D8%A8%D8%A7%D8%... HTTPError 429
       GDELT ar: 0 headlines
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%E5%88%B6%E8%A3%81%20OR%20%E7%A6%8... HTTPError 429
       GDELT zh: 0 headlines
    GDELT: 0 headlines
-      358 candidate headlines, 219 new
+      359 candidate headlines, 208 new
 [2/4] Reading articles...
-      links resolved: 216 of 216
-   ! https://www.ndtv.com/world-news/somalian-force-rescues-us-sanctioned-tanker-sibu-1-seized-... HTTPError 403
+      links resolved: 208 of 208
    ! https://news.usni.org/2026/09/02/european-union-naval-force-intercepts-suspected-russian-s... HTTPError 403
    ! https://www.reuters.com/business/energy/us-sells-scrap-two-sanctioned-oil-tankers-seized-a... HTTPError 401
    ! https://www.reuters.com/world/europe/italian-led-eu-force-boards-sanctioned-tanker-russias... HTTPError 401
+   ! https://www.navalnews.com/naval-news/2026/08/italian-navy-boards-sanctioned-shadow-fleet-t... HTTPError 503
    ! https://www.reuters.com/business/energy/ship-recycler-gms-buys-two-sanctions-hit-tankers-u... HTTPError 401
-   ! https://www.indiatvnews.com/news/india/indian-captain-held-aboard-russian-shadow-fleet-oil... HTTPError 403
-   ! https://www.hstoday.us/subject-matter-areas/customs-immigration/hsi-and-federal-partners-i... HTTPError 403
    ! https://www.chathamhouse.org/publications/the-world-today/2026-09/will-oil-tanker-shadow-f... HTTPError 403
+   ! https://www.indiatvnews.com/news/india/indian-captain-held-aboard-russian-shadow-fleet-oil... HTTPError 403
    ! https://www.rfi.fr/en/international/20260812-russia-threatens-retaliatory-seizures-of-eu-s... HTTPError 403
-   ! https://adaderana.lk/news/cmuq7rmi400003b6p1tui0cj8... HTTPError 403
-   ! https://www.saba.ye/en/news3768011.htm... HTTPError 403
    ! https://www.firstpost.com/world/putin-threatens-to-seize-european-ships-over-russian-shado... HTTPError 403
-   ! https://www.arabnews.com/world/us-imposes-sanctions-targeting-17-vessels-of-iran-shadow-fl... HTTPError 403
-   ! https://tradersunion.com/news/financial-news/show/3490528-russia-expands-tanker-fleet-sanc... HTTPError 403
+   ! https://dataportuaria.com/en/internacional/shipping/u-s-sanctioned-tanker-sibu-1-hijacked-... HTTPError 429
    ! https://www.reuters.com/business/energy/iran-blacklists-more-ships-trying-sail-through-hor... HTTPError 401
+   ! https://tradersunion.com/news/financial-news/show/3490528-russia-expands-tanker-fleet-sanc... HTTPError 403
+   ! https://news.az/news/russia-reflags-107-tankers-as-sanctions-pressure-grows... HTTPError 403
+   ! https://www.news18.com/world/trump-ready-to-offer-iran-sanctions-relief-frozen-funds-for-n... HTTPError 403
    ! https://www.jornada.com.mx/noticia/2026/08/02/mundo/ue-aborda-en-italia-a-buque-petrolero-... HTTPError 403
    ! https://www.sinembargo.mx/4854380/golpe-al-contrabando-en-cdmx-decomisan-2-2-millones-de-c... HTTPError 403
    ! https://lemarin.ouest-france.fr/shipping/en-mediterranee-la-marine-italienne-arraisonne-a-... HTTPError 403
@@ -66,22 +66,20 @@
    ! https://www.lesoir.be/762785/article/2026-08-02/litalie-arraisonne-un-petrolier-soupconne-... HTTPError 403
    ! https://biz.liga.net/energy/news/v-evrosoyuze-zaderzhali-eshte-odin-tanker-iz-tenevogo-flo... HTTPError 403
    ! https://epravda.com.ua/rus/svit/es-zaderzhal-eshche-odin-tanker-tenevogo-flota-rf-824231/... HTTPError 403
+   ! https://repost.news/news/135231-postavki_v_obhod_sanktsij_i_dolja_dlja_opg_sud_zaochno_are... HTTPError 403
    ! https://news.liga.net/war/news/italyanskie-voennye-vysadilis-na-tanker-tenevogo-flota-rf... HTTPError 403
    ! https://ilkha.com/dunya/avrupa-birligi-golge-filoya-ait-bir-tankeri-alikoydu-558807... HTTPError 403
    ! https://www.reuters.com/ar/world/RLNQREGTURO2VCRVGZBDMC2FHY-2026-08-02/... HTTPError 401
-   ! https://repost.news/news/135231-postavki_v_obhod_sanktsij_i_dolja_dlja_opg_sud_zaochno_are... HTTPError 403
-   ! https://www.thestatesman.com/world/us-targets-irans-oil-shadow-fleet-sanctions-22-vessels-... ConnectionError
-   ! http://island.lk/lanka-tracks-11-us-sanctioned-iranian-tankers-off-coast/... ReadTimeout
-      read in full: 186; headline + snippet only: 33
+      read in full: 179; headline + snippet only: 29
 [3/4] Extracting facts and storing...
-      NER supplemented 60 article(s) (unrecognised place names logged to ner_places for review)
-      stored 51, of which 26 are sanctions-related seizure reports
+      NER supplemented 54 article(s) (unrecognised place names logged to ner_places for review)
+      stored 15, of which 7 are sanctions-related seizure reports
 [4/4] Analysing and building report...
-      official lists loaded: OFAC 19,442 names, UN 1,006 names, UK 15,452 names, US UVL 222 names, US CMIC 68 names, US EL 3,317 names, US NS-MBS List 56 names, US CAP 1 names, US SSI 286 names, US ACN 104 names, US DTC 797 names, US PLC 78 names, US DPL 1,506 names, US MEU 70 names, EU 3,020 names
+      official lists loaded: OFAC 19,442 names, UN 1,006 names, UK 15,436 names, US NS-MBS List 56 names, US DTC 797 names, US DPL 1,506 names, US EL 3,317 names, US ACN 104 names, US CAP 1 names, US CMIC 68 names, US SSI 286 names, US MEU 70 names, US PLC 78 names, US UVL 222 names, EU 3,020 names
       9 events name someone or something on an official list
-      sanctions catalogue written: 45,425 names
-Done. 194 events in report, 15 alerts.
-Open: /home/runner/work/Sanctions-seizure-watch/Sanctions-seizure-watch/docs/index.html
+      sanctions catalogue written: 45,409 names
+Done. 199 events in report, 15 alerts.
+Open: /home/runner/work/Global-Sanctions-Watchlist-Control/Global-Sanctions-Watchlist-Control/docs/index.html
   [HIGH  ] Repeat vessel: Smyrtos appears in 3 separate seizure reports
   [HIGH  ] Repeat vessel: Thaon appears in 2 separate seizure reports
   [HIGH  ] Repeat vessel: South Star appears in 2 separate seizure reports
