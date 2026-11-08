@@ -42,7 +42,12 @@ jobs:
       - if: steps.gate.outputs.go == 'yes'
         run: pip install -r requirements.txt
       - if: steps.gate.outputs.go == 'yes'
-        run: python -m spacy download en_core_web_sm
+        run: |
+          for i in 1 2 3 4; do
+            python -m spacy download en_core_web_sm && exit 0
+            echo "Download failed (attempt $i), retrying in $((i*20))s"; sleep $((i*20))
+          done
+          exit 1
       - name: Collect, analyse and build the dashboard
         if: steps.gate.outputs.go == 'yes'
         run: python -u run_daily.py --days "${{ github.event.inputs.days || '2' }}" 2>&1 | tee run.log
