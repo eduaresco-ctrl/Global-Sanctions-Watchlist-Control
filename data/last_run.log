@@ -2,7 +2,7 @@
    RSS UK Foreign Office sanctions news: 20 items
    RSS UK Border Force: 20 items
    RSS Hong Kong government press releases (includes Customs): 100 items
-   Official websites (45 searched): 1210 headlines
+   Official websites (45 searched): 1207 headlines
       edition ES/es: 0 headlines
       edition MX/es: 0 headlines
       edition FR/fr: 0 headlines
@@ -10,25 +10,27 @@
       edition DE/de: 0 headlines
       edition NL/nl: 0 headlines
       edition BE/nl: 0 headlines
-      edition RU/ru: 29 headlines
-      edition UA/ru: 29 headlines
+      edition RU/ru: 32 headlines
+      edition UA/ru: 31 headlines
       edition TR/tr: 0 headlines
-      edition AE/ar: 9 headlines
-      edition SA/ar: 9 headlines
+      edition AE/ar: 4 headlines
+      edition SA/ar: 4 headlines
       edition HK/zh: 0 headlines
       edition TW/zh: 0 headlines
-   Google News: 584 headlines
+   Google News: 537 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctioned%20OR%20%22shadow%20flee... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctioned%20OR%20%22shadow%20flee... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28OFAC%20OR%20%22sanctions%20evasion... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28OFAC%20OR%20%22sanctions%20evasion... HTTPError 429
-   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20%22export%20contr... HTTPError 429
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20sanctioned%20OR%2... HTTPError 429
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20sanctioned%20OR%2... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20%22export%20contr... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanciones%20OR%20%22flota%20fantas... HTTPError 429
       GDELT es: 0 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20%22flotte%20fanto... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20%22flotte%20fanto... HTTPError 429
       GDELT fr: 0 headlines
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28Sanktionen%20OR%20Schattenflotte%2... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28Sanktionen%20OR%20Schattenflotte%2... HTTPError 429
       GDELT de: 0 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%D1%81%D0%B0%D0%BD%D0%BA%D1%86%D0%... HTTPError 429
@@ -37,22 +39,28 @@
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28yaptirim%20OR%20ambargo%29%20%28al... HTTPError 429
       GDELT tr: 0 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%D8%B9%D9%82%D9%88%D8%A8%D8%A7%D8%... HTTPError 429
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%D8%B9%D9%82%D9%88%D8%A8%D8%A7%D8%... HTTPError 429
       GDELT ar: 0 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%E5%88%B6%E8%A3%81%20OR%20%E7%A6%8... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%E5%88%B6%E8%A3%81%20OR%20%E7%A6%8... HTTPError 429
       GDELT zh: 0 headlines
    GDELT: 0 headlines
-      5 candidate headlines, 4 new
+      11 candidate headlines, 7 new
 [2/4] Reading articles...
-      links resolved: 3 of 3
-      read in full: 4; headline + snippet only: 0
+      links resolved: 7 of 7
+   ! https://conservativepost.co.uk/only-one-russian-shadow-fleet-tanker-stopped-since-labour-p... HTTPError 502
+   ! https://prospect.com.ru/news/7164462/v-serbii-zadergali-prizyvavshego-k-sanktsiyam-protiv-... HTTPError 403
+   ! https://prospect.com.ru/news/7165513/v-serbii-zadergali-prizyvavshego-k-sanktsiyam-protiv-... HTTPError 403
+      read in full: 4; headline + snippet only: 3
 [3/4] Extracting facts and storing...
-      stored 4, of which 1 are sanctions-related seizure reports
+      stored 7, of which 3 are sanctions-related seizure reports
 [4/4] Analysing and building report...
-      official lists loaded: OFAC 19,533 names, UN 1,006 names, UK 15,436 names, US UVL 222 names, US CMIC 68 names, US DTC 797 names, US EL 3,317 names, US NS-MBS List 56 names, US CAP 1 names, US PLC 78 names, US MEU 70 names, US SSI 286 names, US DPL 1,506 names, US ACN 104 names, EU 3,020 names
+      read in full: 1; headline + snippet only: 0
+      re-read 1 of 1 earlier headline-only report(s) in full
+      official lists loaded: OFAC 19,533 names, UN 1,006 names, UK 15,436 names, US PLC 78 names, US DPL 1,506 names, US MEU 70 names, US NS-MBS List 56 names, US CMIC 68 names, US SSI 286 names, US CAP 1 names, US UVL 222 names, US DTC 797 names, US ACN 104 names, US EL 3,317 names, EU 3,020 names
       10 events name someone or something on an official list
       sanctions catalogue written: 45,500 names
-Done. 213 events in report, 16 alerts.
+Done. 215 events in report, 14 alerts.
 Open: /home/runner/work/Global-Sanctions-Watchlist-Control/Global-Sanctions-Watchlist-Control/docs/index.html
   [HIGH  ] Repeat vessel: Smyrtos appears in 4 separate seizure reports
   [HIGH  ] Repeat vessel: Thaon appears in 2 separate seizure reports
