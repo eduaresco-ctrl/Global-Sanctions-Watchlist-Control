@@ -2,49 +2,50 @@
    RSS UK Foreign Office sanctions news: 20 items
    RSS UK Border Force: 20 items
    RSS Hong Kong government press releases (includes Customs): 100 items
-   Official websites (45 searched): 1207 headlines
-   ! https://news.google.com/rss/search?q=crypto%20OR%20wallets%20OR%20exchange%20seized%20OR%2... HTTPError 429
-   ! https://news.google.com/rss/search?q=North%20Korea%20sanctions%20seized%20shipment%20OR%20... HTTPError 429
+   Official websites (45 searched): 1239 headlines
+   ! https://news.google.com/rss/search?q=microchips%20OR%20%22drone%20components%22%20OR%20%22... HTTPError 429
    ! https://news.google.com/rss/search?q=Houthi%20weapons%20shipment%20seized%20OR%20interdict... HTTPError 429
+   ! https://news.google.com/rss/search?q=fertiliser%20OR%20grain%20OR%20seafood%20shipment%20s... HTTPError 429
+   ! https://news.google.com/rss/search?q=oligarch%20yacht%20OR%20jet%20OR%20assets%20seized%20... HTTPError 429
    ! https://news.google.com/rss/search?q=Russian%20sanctions%20customs%20seizure%20re-export%2... HTTPError 429
    ! https://news.google.com/rss/search?q=antiquities%20OR%20artifacts%20OR%20%22cultural%20pro... HTTPError 429
-   ! https://news.google.com/rss/search?q=gold%20OR%20diamonds%20OR%20coal%20seized%20sanctions... HTTPError 429
-   ! https://news.google.com/rss/search?q=bitcoin%20OR%20crypto%20mining%20equipment%20customs%... HTTPError 429
-   ! https://news.google.com/rss/search?q=petrolero%20sancionado%20OR%20%22flota%20fantasma%22%... HTTPError 429
+   ! https://news.google.com/rss/search?q=surveillance%20OR%20spyware%20OR%20%22telecom%20equip... HTTPError 429
+   ! https://news.google.com/rss/search?q=sanctioned%20tanker%20seized%20OR%20detained%20OR%20b... HTTPError 429
+   ! https://news.google.com/rss/search?q=shadow%20fleet%20tanker%20detained%20OR%20boarded%20O... HTTPError 429
+   ! https://news.google.com/rss/search?q=North%20Korea%20sanctions%20seized%20shipment%20OR%20... HTTPError 429
+   ! https://news.google.com/rss/search?q=surveillance%20OR%20spyware%20OR%20%22telecom%20equip... HTTPError 429
+   ! https://news.google.com/rss/search?q=Nvidia%20OR%20GPUs%20OR%20%22AI%20chips%22%20OR%20%22... HTTPError 429
+   ! https://news.google.com/rss/search?q=Nvidia%20OR%20GPUs%20OR%20%22AI%20chips%22%20OR%20%22... HTTPError 429
       edition ES/es: 0 headlines
-   ! https://news.google.com/rss/search?q=petrolero%20sancionado%20OR%20%22flota%20fantasma%22%... HTTPError 429
-   ! https://news.google.com/rss/search?q=sanciones%20incautan%20OR%20decomisan%20embargo%20car... HTTPError 429
       edition MX/es: 0 headlines
-   ! https://news.google.com/rss/search?q=sanctions%20douane%20saisie%20biens%20double%20usage%... HTTPError 429
-   ! https://news.google.com/rss/search?q=embargo%20armes%20saisie%20navire%20OR%20cargaison%20... HTTPError 429
-      edition FR/fr: 3 headlines
+      edition FR/fr: 1 headlines
       edition PT/pt: 0 headlines
       edition DE/de: 0 headlines
       edition NL/nl: 0 headlines
       edition BE/nl: 0 headlines
-   ! https://news.google.com/rss/search?q=%D1%81%D0%B0%D0%BD%D0%BA%D1%86%D0%B8%D0%B8%20%D0%BC%D... HTTPError 429
-      edition RU/ru: 44 headlines
-   ! https://news.google.com/rss/search?q=%D1%81%D0%B0%D0%BD%D0%BA%D1%86%D0%B8%D0%B8%20%D0%B0%D... HTTPError 429
-      edition UA/ru: 15 headlines
+      edition RU/ru: 34 headlines
+      edition UA/ru: 37 headlines
       edition TR/tr: 0 headlines
-      edition AE/ar: 1 headlines
-   ! https://news.google.com/rss/search?q=%D8%AD%D8%B8%D8%B1%20%D8%A7%D9%84%D8%A3%D8%B3%D9%84%D... HTTPError 429
-      edition SA/ar: 0 headlines
+      edition AE/ar: 4 headlines
+      edition SA/ar: 4 headlines
       edition HK/zh: 0 headlines
-   ! https://news.google.com/rss/search?q=%E5%88%B6%E8%A3%81%20%E6%89%A3%E6%8A%BC%20OR%20%E6%9F... HTTPError 429
       edition TW/zh: 0 headlines
-   Google News: 610 headlines
+   Google News: 451 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctioned%20OR%20%22shadow%20flee... HTTPError 429
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctioned%20OR%20%22shadow%20flee... HTTPError 429
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28OFAC%20OR%20%22sanctions%20evasion... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20sanctioned%20OR%2... HTTPError 429
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20sanctioned%20OR%2... HTTPError 429
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20%22export%20contr... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanciones%20OR%20%22flota%20fantas... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanciones%20OR%20%22flota%20fantas... HTTPError 429
       GDELT es: 0 headlines
-   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20%22flotte%20fanto... HTTPError 429
-   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28sanctions%20OR%20%22flotte%20fanto... HTTPError 429
       GDELT fr: 0 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28Sanktionen%20OR%20Schattenflotte%2... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28Sanktionen%20OR%20Schattenflotte%2... HTTPError 429
       GDELT de: 0 headlines
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%D1%81%D0%B0%D0%BD%D0%BA%D1%86%D0%... HTTPError 429
+   ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%D1%81%D0%B0%D0%BD%D0%BA%D1%86%D0%... HTTPError 429
       GDELT ru: 0 headlines
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28yaptirim%20OR%20ambargo%29%20%28al... HTTPError 429
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28yaptirim%20OR%20ambargo%29%20%28al... HTTPError 429
@@ -56,20 +57,19 @@
    ! https://api.gdeltproject.org/api/v2/doc/doc?query=%28%28%E5%88%B6%E8%A3%81%20OR%20%E7%A6%8... HTTPError 429
       GDELT zh: 0 headlines
    GDELT: 0 headlines
-      11 candidate headlines, 7 new
+      9 candidate headlines, 3 new
 [2/4] Reading articles...
-      links resolved: 4 of 5
-   ! 1 links failed: Failed to fetch data attributes from Google News.
-   ! https://www.slobodenpecat.mk/ru/foto-silite-na-eu-presretnaa-tanker-od-ruskata-flota-vo-se... HTTPError 403
-      read in full: 5; headline + snippet only: 2
+      links resolved: 3 of 3
+      read in full: 3; headline + snippet only: 0
 [3/4] Extracting facts and storing...
-      NER supplemented 2 article(s) (unrecognised place names logged to ner_places for review)
-      stored 7, of which 2 are sanctions-related seizure reports
+      NER supplemented 1 article(s) (unrecognised place names logged to ner_places for review)
+      stored 3, of which 2 are sanctions-related seizure reports
 [4/4] Analysing and building report...
-      official lists loaded: OFAC 19,535 names, UN 1,006 names, UK 15,493 names, US SSI 286 names, US CMIC 68 names, US EL 3,317 names, US DPL 1,506 names, US PLC 78 names, US ACN 104 names, US UVL 222 names, US NS-MBS List 56 names, US MEU 70 names, US CAP 1 names, US DTC 797 names, EU 3,020 names
+      list download https://webgate.ec.europa.eu/fsd/fsf/public/files/csvFullSanctionsList: HTTP 500
+      official lists loaded: OFAC 19,541 names, UN 1,006 names, UK 15,493 names, US EL 3,317 names, US DTC 797 names, US CAP 1 names, US ACN 104 names, US SSI 286 names, US PLC 78 names, US UVL 222 names, US NS-MBS List 56 names, US CMIC 68 names, US MEU 70 names, US DPL 1,506 names
       11 events name someone or something on an official list
-      sanctions catalogue written: 45,559 names
-Done. 231 events in report, 16 alerts.
+      sanctions catalogue written: 42,545 names
+Done. 232 events in report, 16 alerts.
 Open: /home/runner/work/Global-Sanctions-Watchlist-Control/Global-Sanctions-Watchlist-Control/docs/index.html
   [HIGH  ] High-score event: Vessel / tanker seized - Mediterranean Sea
   [HIGH  ] Repeat vessel: Smyrtos appears in 4 separate seizure reports
